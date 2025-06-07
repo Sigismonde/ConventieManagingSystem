@@ -122,7 +122,11 @@
                             <tr th:if="${conventiiInAsteptare == null || conventiiInAsteptare.empty}">
                                 <td colspan="5" class="text-center">Nu există convenții în așteptare.</td>
                             </tr>
-                            <tr th:each="conventie : ${conventiiInAsteptare}">
+                            <tr th:each="conventie : ${conventii}" th:class="${
+    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PARTENER ? 'table-warning' : 
+    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_PARTENER ? 'table-info' : 
+    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA ? 'table-success' : 
+    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).RESPINSA ? 'table-danger' : ''}">
                                 <td th:text="${conventie.student != null ? conventie.student.numeComplet : 'N/A'}">Nume Student</td>
                                 <td>
                                     <span th:text="${conventie.dataInceput != null ? #dates.format(conventie.dataInceput, 'dd.MM.yyyy') : 'N/A'}"></span> -

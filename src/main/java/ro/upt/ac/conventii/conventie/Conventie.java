@@ -51,7 +51,7 @@ public class Conventie
 	private Date dataIntocmirii;
 	
 	@Enumerated(EnumType.STRING)
-    private ConventieStatus status = ConventieStatus.IN_ASTEPTARE;
+    private ConventieStatus status = ConventieStatus.IN_ASTEPTARE_PARTENER;
 
 	
 	public Conventie()

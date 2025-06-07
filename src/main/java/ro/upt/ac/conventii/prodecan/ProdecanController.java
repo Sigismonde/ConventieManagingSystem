@@ -149,7 +149,7 @@ public class ProdecanController {
             // Preluăm convențiile nesemnate
             Pageable lastThree = PageRequest.of(0, 3);
             List<Conventie> conventiiNesemnate = conventieRepository
-                .findTop3ByStatusOrderByDataIntocmiriiDesc(ConventieStatus.IN_ASTEPTARE, lastThree);
+                .findTop3ByStatusOrderByDataIntocmiriiDesc(ConventieStatus.IN_ASTEPTARE_PRODECAN, lastThree);
             model.addAttribute("conventiiNesemnate", conventiiNesemnate);
 
             // Preluăm doar ultimele 5 convenții semnate
@@ -656,7 +656,7 @@ public class ProdecanController {
         // Data pentru partener
         PdfPCell dataPartener = new PdfPCell();
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
@@ -709,7 +709,7 @@ public class ProdecanController {
         // Semnătura partenerului
         PdfPCell semnPartener = new PdfPCell();
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
@@ -975,7 +975,7 @@ public class ProdecanController {
         
         // Data pentru partener - dacă a fost aprobată de partener sau mai departe
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.APROBATA) {
@@ -1022,7 +1022,7 @@ public class ProdecanController {
         // Semnătura partenerului - dacă a fost aprobată de partener sau mai departe
         XWPFTableCell partenerCell = signRow.getCell(2);
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.APROBATA) {
@@ -1425,7 +1425,7 @@ public class ProdecanController {
             System.out.println("Total convenții găsite: " + toateConventiile.size());
 
             // Apoi filtrăm doar după status IN_ASTEPTARE (indiferent de flagul trimisaTutore)
-            List<Conventie> conventiiNesemnate = conventieRepository.findByStatus(ConventieStatus.IN_ASTEPTARE);
+            List<Conventie> conventiiNesemnate = conventieRepository.findByStatus(ConventieStatus.IN_ASTEPTARE_PRODECAN);
             
             
             

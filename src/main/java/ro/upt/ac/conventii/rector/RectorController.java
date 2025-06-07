@@ -64,7 +64,7 @@ public class RectorController {
             // Preluăm convențiile nesemnate
             Pageable lastThree = PageRequest.of(0, 3);
             List<Conventie> conventiiNesemnate = conventieRepository
-                .findTop3ByStatusOrderByDataIntocmiriiDesc(ConventieStatus.IN_ASTEPTARE, lastThree);
+                .findTop3ByStatusOrderByDataIntocmiriiDesc(ConventieStatus.IN_ASTEPTARE_PRORECTOR, lastThree);
             model.addAttribute("conventiiNesemnate", conventiiNesemnate != null ? conventiiNesemnate : new ArrayList<>());
 
             // Preluăm doar ultimele 5 convenții semnate
@@ -126,7 +126,7 @@ public class RectorController {
         model.addAttribute("user", user);
         
         try {
-            List<Conventie> conventiiNesemnate = conventieRepository.findByStatus(ConventieStatus.IN_ASTEPTARE);
+            List<Conventie> conventiiNesemnate = conventieRepository.findByStatus(ConventieStatus.IN_ASTEPTARE_PRORECTOR);
             List<Conventie> conventiiSemnate = conventieRepository.findByStatus(ConventieStatus.APROBATA);
             
             model.addAttribute("conventiiNesemnate", conventiiNesemnate != null ? conventiiNesemnate : new ArrayList<>());

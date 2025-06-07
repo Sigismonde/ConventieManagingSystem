@@ -46,7 +46,7 @@ public class ConventieController
 	
 	@GetMapping("/conventie-create")
 	public String create(Conventie conventie, Model model) {
-	    conventie.setStatus(ConventieStatus.IN_ASTEPTARE);
+	    conventie.setStatus(ConventieStatus.IN_ASTEPTARE_PARTENER);
 	    
 	    model.addAttribute("conventie", conventie);
 	    model.addAttribute("companii", companieRepository.findAll());
@@ -61,7 +61,7 @@ public class ConventieController
 	        if(result.hasErrors()) {
 	            return "conventie-create";
 	        }
-	        conventie.setStatus(ConventieStatus.IN_ASTEPTARE);
+	        conventie.setStatus(ConventieStatus.IN_ASTEPTARE_PARTENER);
 	        conventieRepository.save(conventie);
 	        return "redirect:/conventie-read";
 	    }

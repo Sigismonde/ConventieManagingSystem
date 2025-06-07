@@ -193,7 +193,7 @@ public class StudentController {
         // Creăm convenția și setăm studentul
         Conventie conventie = new Conventie();
         conventie.setStudent(student);
-        conventie.setStatus(ConventieStatus.IN_ASTEPTARE);
+        conventie.setStatus(ConventieStatus.IN_ASTEPTARE_PARTENER);
         
         // Inițializăm un obiect tutore gol pentru formularul Thymeleaf
         Tutore tutore = new Tutore();
@@ -408,75 +408,75 @@ public class StudentController {
  // Fragment pentru actualizarea StudentController
  // Metoda de trimitere a unei convenții ar trebui actualizată astfel:
 
- @PostMapping("/student/conventie-trimite/{id}")
- public String trimiteConventie(@PathVariable("id") int id, Authentication authentication, RedirectAttributes redirectAttributes) {
-     try {
-         User user = (User) authentication.getPrincipal();
-         Conventie conventie = conventieRepository.findById(id);
-         
-         if (conventie == null) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Convenția nu a fost găsită!");
-             return "redirect:/student/conventii";
-         }
+ // În StudentController.java - actualizează aceste metode:
 
-         if (!conventie.getStudent().getEmail().equals(user.getEmail())) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Nu aveți permisiunea să trimiteți această convenție!");
-             return "redirect:/student/conventii";
-         }
+    @PostMapping("/student/conventie-trimite/{id}")
+    public String trimiteConventie(@PathVariable("id") int id, Authentication authentication, RedirectAttributes redirectAttributes) {
+        try {
+            User user = (User) authentication.getPrincipal();
+            Conventie conventie = conventieRepository.findById(id);
+            
+            if (conventie == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Convenția nu a fost găsită!");
+                return "redirect:/student/conventii";
+            }
 
-         if (conventie.getStatus() != ConventieStatus.NETRIMIS && conventie.getStatus() != ConventieStatus.RESPINSA) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Convenția nu poate fi trimisă în starea curentă!");
-             return "redirect:/student/conventii";
-         }
+            if (!conventie.getStudent().getEmail().equals(user.getEmail())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Nu aveți permisiunea să trimiteți această convenție!");
+                return "redirect:/student/conventii";
+            }
 
-         // Actualizăm statusul și data
-         conventie.setStatus(ConventieStatus.IN_ASTEPTARE);
-         conventie.setDataIntocmirii(new java.sql.Date(System.currentTimeMillis()));
-         conventieRepository.save(conventie);
-         
-         redirectAttributes.addFlashAttribute("successMessage", "Convenția a fost trimisă cu succes către partenerul de practică pentru aprobare!");
-         
-     } catch (Exception e) {
-         redirectAttributes.addFlashAttribute("errorMessage", "Eroare la trimiterea convenției: " + e.getMessage());
-     }
-     return "redirect:/student/conventii";
- }
- 
- @PostMapping("/student/conventie-trimite-tutore/{id}")
- public String trimiteConventieTutore(@PathVariable("id") int id, Authentication authentication, RedirectAttributes redirectAttributes) {
-     try {
-         User user = (User) authentication.getPrincipal();
-         Conventie conventie = conventieRepository.findById(id);
-         
-         if (conventie == null) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Convenția nu a fost găsită!");
-             return "redirect:/student/conventii";
-         }
+            if (conventie.getStatus() != ConventieStatus.NETRIMIS && conventie.getStatus() != ConventieStatus.RESPINSA) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Convenția nu poate fi trimisă în starea curentă!");
+                return "redirect:/student/conventii";
+            }
 
-         if (!conventie.getStudent().getEmail().equals(user.getEmail())) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Nu aveți permisiunea să trimiteți această convenție!");
-             return "redirect:/student/conventii";
-         }
+            // Actualizăm statusul la IN_ASTEPTARE_PARTENER (fost IN_ASTEPTARE)
+            conventie.setStatus(ConventieStatus.IN_ASTEPTARE_PARTENER);
+            conventie.setDataIntocmirii(new java.sql.Date(System.currentTimeMillis()));
+            conventieRepository.save(conventie);
+            
+            redirectAttributes.addFlashAttribute("successMessage", "Convenția a fost trimisă cu succes către partenerul de practică pentru aprobare!");
+            
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Eroare la trimiterea convenției: " + e.getMessage());
+        }
+        return "redirect:/student/conventii";
+    }
 
-         // Verificăm dacă convenția a fost aprobată de partener
-         if (conventie.getStatus() != ConventieStatus.APROBATA_PARTENER) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Convenția trebuie să fie aprobată de partener înainte de a fi trimisă către tutore!");
-             return "redirect:/student/conventii";
-         }
-         
-         // Schimbăm statusul la TRIMISA_TUTORE
-         conventie.setStatus(ConventieStatus.TRIMISA_TUTORE);
-         conventieRepository.save(conventie);
-         
-         redirectAttributes.addFlashAttribute("successMessage", "Convenția a fost trimisă cu succes către tutore și așteaptă aprobarea acestuia!");
-         
-     } catch (Exception e) {
-         redirectAttributes.addFlashAttribute("errorMessage", "Eroare la trimiterea convenției către tutore: " + e.getMessage());
-     }
-     return "redirect:/student/conventii";
- }
- 
- 
+    @PostMapping("/student/conventie-trimite-tutore/{id}")
+    public String trimiteConventieTutore(@PathVariable("id") int id, Authentication authentication, RedirectAttributes redirectAttributes) {
+        try {
+            User user = (User) authentication.getPrincipal();
+            Conventie conventie = conventieRepository.findById(id);
+            
+            if (conventie == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Convenția nu a fost găsită!");
+                return "redirect:/student/conventii";
+            }
+
+            if (!conventie.getStudent().getEmail().equals(user.getEmail())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Nu aveți permisiunea să trimiteți această convenție!");
+                return "redirect:/student/conventii";
+            }
+
+            // Verificăm dacă convenția a fost aprobată de partener
+            if (conventie.getStatus() != ConventieStatus.APROBATA_PARTENER) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Convenția trebuie să fie aprobată de partener înainte de a fi trimisă către tutore!");
+                return "redirect:/student/conventii";
+            }
+            
+            // Schimbăm statusul la IN_ASTEPTARE_TUTORE (fost TRIMISA_TUTORE)
+            conventie.setStatus(ConventieStatus.IN_ASTEPTARE_TUTORE);
+            conventieRepository.save(conventie);
+            
+            redirectAttributes.addFlashAttribute("successMessage", "Convenția a fost trimisă cu succes către tutore și așteaptă aprobarea acestuia!");
+            
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Eroare la trimiterea convenției către tutore: " + e.getMessage());
+        }
+        return "redirect:/student/conventii";
+    }
 //Adăugăm o nouă metodă în StudentController pentru trimiterea către prodecan
 //Această metodă trebuie adăugată în clasa ro.upt.ac.conventii.student.StudentController
 
@@ -1300,7 +1300,7 @@ private void addParagraph(Document document, String text, Font font) throws Docu
         // Data pentru partener
         PdfPCell dataPartener = new PdfPCell();
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
@@ -1310,7 +1310,6 @@ private void addParagraph(Document document, String text, Font font) throws Docu
         } else {
             dataPartener.addElement(new Paragraph(".....", font));
         }
-        
         // Data pentru student
         PdfPCell dataPracticant = new PdfPCell();
         if (conventie.getStatus() != ConventieStatus.NETRIMIS) {
@@ -1370,11 +1369,10 @@ private void addParagraph(Document document, String text, Font font) throws Docu
             semnUPT.addElement(new Paragraph(".....", font));
         }
         
-        // Semnătura partenerului
+     // Semnătura partenerului - actualizată pentru noile statusuri
         PdfPCell semnPartener = new PdfPCell();
-        semnPartener.setPaddingTop(20);
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
@@ -1561,7 +1559,6 @@ private void addParagraph(Document document, String text, Font font) throws Docu
         
         // Semnătura tutorelui
         PdfPCell semnTutore = new PdfPCell();
-        semnTutore.setPaddingTop(20);
         if (conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
@@ -1586,7 +1583,6 @@ private void addParagraph(Document document, String text, Font font) throws Docu
         } else {
             semnTutore.addElement(new Paragraph(".....", font));
         }
-
         semnCadruDidactic.setHorizontalAlignment(Element.ALIGN_CENTER);
         semnTutore.setHorizontalAlignment(Element.ALIGN_CENTER);
 
@@ -1986,7 +1982,7 @@ private void addParagraph(Document document, String text, Font font) throws Docu
         
         // Data pentru partener - dacă a fost aprobată de partener sau mai departe
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
@@ -2054,7 +2050,7 @@ private void addParagraph(Document document, String text, Font font) throws Docu
         // Semnătura partenerului - dacă a fost aprobată de partener sau mai departe
         XWPFTableCell partenerCell = signRow.getCell(2);
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||

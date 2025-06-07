@@ -962,7 +962,7 @@ public class ProrectorController {
      // Date for partner - show date if approved by partner or further
      PdfPCell dataPartener = new PdfPCell();
      if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-         conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+         conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
          conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
          conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
          conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
@@ -1019,7 +1019,7 @@ public class ProrectorController {
      PdfPCell semnPartener = new PdfPCell();
      semnPartener.setPaddingTop(20);
      if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-         conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+         conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
          conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
          conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
          conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
@@ -1312,7 +1312,7 @@ public class ProrectorController {
         
         // Data pentru partener - dacă a fost aprobată de partener sau mai departe
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
@@ -1363,7 +1363,7 @@ public class ProrectorController {
         // Semnătura partenerului - dacă a fost aprobată de partener sau mai departe
         XWPFTableCell partenerCell = signRow.getCell(2);
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||

@@ -93,7 +93,8 @@ public class PartnerController {
     @Autowired
     private UserRepository userRepository;
     
-    // Dashboard endpoint
+ // În PartnerController.java - actualizează aceste metode:
+
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
         User user = (User) authentication.getPrincipal();
@@ -107,9 +108,9 @@ public class PartnerController {
         Companie companie = partner.getCompanie();
         model.addAttribute("companie", companie);
         
-        // Get pending conventions
+        // Get pending conventions - actualizat la IN_ASTEPTARE_PARTENER
         List<Conventie> conventiiInAsteptare = conventieRepository.findByCompanieAndStatus(
-                companie, ConventieStatus.IN_ASTEPTARE);
+                companie, ConventieStatus.IN_ASTEPTARE_PARTENER);
         model.addAttribute("conventiiInAsteptare", conventiiInAsteptare);
         
         // Get recently approved conventions (top 5)
@@ -120,29 +121,7 @@ public class PartnerController {
         
         return "partner/dashboard";
     }
-    
-    // List all conventions
-    @GetMapping("/conventii")
-    public String conventii(Authentication authentication, Model model) {
-        User user = (User) authentication.getPrincipal();
-        Partner partner = partnerRepository.findByEmail(user.getEmail())
-                .orElseThrow(() -> new RuntimeException("Partner not found"));
-        
-        model.addAttribute("user", user);
-        model.addAttribute("partner", partner);
-        
-        // Get company info
-        Companie companie = partner.getCompanie();
-        
-        // Get all conventions for this company
-        List<Conventie> conventii = conventieRepository.findByCompanie(companie);
-        model.addAttribute("conventii", conventii);
-        
-        return "partner/conventii";
-    }
-    
-    // Approve convention
-  
+
     @PostMapping("/conventie/aproba/{id}")
     public String aprobaConventie(@PathVariable("id") int id, 
                                  Authentication authentication, 
@@ -179,12 +158,15 @@ public class PartnerController {
                 // Aprobarea de către tutore (care este tot partenerul)
                 conventie.setStatus(ConventieStatus.APROBATA);
             } else {
-                // Aprobarea de către partenerul de practică
+                // Aprobarea de către partenerul de practică - verificăm statusul corect
+                if (conventie.getStatus() != ConventieStatus.IN_ASTEPTARE_PARTENER) {
+                    redirectAttributes.addFlashAttribute("errorMessage", 
+                        "Convenția nu este în starea corectă pentru aprobare!");
+                    return "redirect:/partner/conventii";
+                }
                 conventie.setStatus(ConventieStatus.APROBATA_PARTENER);
             }
             
-            // Update status
-//            conventie.setStatus(ConventieStatus.APROBATA_PARTENER);
             conventieRepository.save(conventie);
             
             redirectAttributes.addFlashAttribute("successMessage", 
@@ -197,6 +179,30 @@ public class PartnerController {
         
         return "redirect:/partner/conventii";
     }
+    
+    // List all conventions
+    @GetMapping("/conventii")
+    public String conventii(Authentication authentication, Model model) {
+        User user = (User) authentication.getPrincipal();
+        Partner partner = partnerRepository.findByEmail(user.getEmail())
+                .orElseThrow(() -> new RuntimeException("Partner not found"));
+        
+        model.addAttribute("user", user);
+        model.addAttribute("partner", partner);
+        
+        // Get company info
+        Companie companie = partner.getCompanie();
+        
+        // Get all conventions for this company
+        List<Conventie> conventii = conventieRepository.findByCompanie(companie);
+        model.addAttribute("conventii", conventii);
+        
+        return "partner/conventii";
+    }
+    
+    // Approve convention
+  
+   
     
     // Reject convention
     @PostMapping("/conventie/respinge/{id}")
@@ -615,13 +621,12 @@ public class PartnerController {
 
         PdfPCell dataUPT = new PdfPCell(new Paragraph(".....", font));
         
-        // Data pentru partener
         PdfPCell dataPartener = new PdfPCell();
-        // Dacă partenerul vizualizează și e gata să aprobe sau a aprobat deja
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
             conventie.getStatus() == ConventieStatus.APROBATA) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
             dataPartener.addElement(new Paragraph(dateFormat.format(conventie.getDataIntocmirii()), font));
@@ -654,31 +659,40 @@ public class PartnerController {
         PdfPCell semnUPT = new PdfPCell(new Paragraph(".....", font));
         
         // Semnătura partenerului
+     // Semnătura partenerului - actualizată pentru noile statusuri
         PdfPCell semnPartener = new PdfPCell();
-        // Semnătura este afișată doar dacă statusul este corespunzător
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
             conventie.getStatus() == ConventieStatus.APROBATA) {
             
-            if (partner.getSemnatura() != null) {
-                try {
-                    Image signature = Image.getInstance(partner.getSemnatura());
+            try {
+                List<Partner> partners = partnerRepository.findByCompanieId(conventie.getCompanie().getId());
+                Partner partner2 = null;
+                
+                if (partners != null && !partners.isEmpty()) {
+                    for (Partner p : partners) {
+                        if (p.getSemnatura() != null) {
+                            partner2 = p;
+                            break;
+                        }
+                    }
+                }
+                
+                if (partner2 != null && partner.getSemnatura() != null) {
+                    Image signature = Image.getInstance(partner2.getSemnatura());
                     signature.scaleToFit(100, 50);
                     signature.setAlignment(Element.ALIGN_CENTER);
                     semnPartener.addElement(signature);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } else {
                     semnPartener.addElement(new Paragraph("[Semnătură electronică]", font));
                 }
-            } else {
-                semnPartener.addElement(new Paragraph("[Semnătură electronică]", font));
+            } catch (Exception e) {
+                e.printStackTrace();
+                semnPartener.addElement(new Paragraph(".....", font));
             }
-        } else if (conventie.getStatus() == ConventieStatus.IN_ASTEPTARE) {
-            // Partenerul vede convenția și este gata să semneze
-            // Afișăm "Semnați aici" sau un mesaj similar
-            semnPartener.addElement(new Paragraph("(Veți semna electronic)", font));
         } else {
             semnPartener.addElement(new Paragraph(".....", font));
         }
@@ -862,7 +876,7 @@ public class PartnerController {
         
         // Data pentru partener
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE ||
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.APROBATA) {
@@ -886,7 +900,7 @@ public class PartnerController {
         // Semnătura partenerului
         XWPFTableCell partnerCell = signRow.getCell(2);
         if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
-            conventie.getStatus() == ConventieStatus.TRIMISA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE ||
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
             conventie.getStatus() == ConventieStatus.APROBATA) {
@@ -912,7 +926,7 @@ public class PartnerController {
             } else {
                 partnerRun.setText("[Semnătură electronică]");
             }
-        } else if (conventie.getStatus() == ConventieStatus.IN_ASTEPTARE) {
+        } else if (conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PARTENER) {
             XWPFParagraph partnerPara = partnerCell.getParagraphs().get(0);
             partnerPara.setAlignment(ParagraphAlignment.CENTER);
             XWPFRun partnerRun = partnerPara.createRun();

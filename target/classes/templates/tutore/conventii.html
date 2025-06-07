@@ -102,11 +102,12 @@
                             <tr th:if="${conventii == null || conventii.empty}">
                                 <td colspan="6" class="text-center">Nu există convenții asignate dumneavoastră.</td>
                             </tr>
-                            <tr th:each="conventie : ${conventii}" th:class="${
-                                conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).TRIMISA_TUTORE ? 'table-warning' : 
-                                conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'table-info' : 
-                                conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA ? 'table-success' : 
-                                conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).RESPINSA ? 'table-danger' : ''}">
+                            <!-- În tutore/conventii.html - actualizează clasa pentru rândurile din tabel -->
+<tr th:each="conventie : ${conventii}" th:class="${
+    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE ? 'table-warning' : 
+    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'table-info' : 
+    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA ? 'table-success' : 
+    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).RESPINSA ? 'table-danger' : ''}">
                                 <td th:text="${conventie.student != null ? conventie.student.numeComplet : 'N/A'}">Nume Student</td>
                                 <td>
                                     <span th:text="${conventie.dataInceput != null ? #dates.format(conventie.dataInceput, 'dd.MM.yyyy') : 'N/A'}"></span> -
@@ -115,12 +116,12 @@
                                 <td th:text="${conventie.numeProiect}">Nume Proiect</td>
                                 <td th:text="${conventie.dataIntocmirii != null ? #dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy') : 'N/A'}">Data Întocmirii</td>
                                 <td>
-                                    <span th:class="${'badge ' + 
-                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).TRIMISA_TUTORE ? 'bg-warning' : '') +
-                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'bg-info' : '') +
-                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA ? 'bg-success' : '') +
-                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).RESPINSA ? 'bg-danger' : '')}"
-                                        th:text="${conventie.status}">Status</span>
+                                   <span th:class="${'badge ' + 
+    (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE ? 'bg-warning' : '') +
+    (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'bg-info' : '') +
+    (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA ? 'bg-success' : '') +
+    (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).RESPINSA ? 'bg-danger' : '')}"
+      th:text="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE ? 'ÎN AȘTEPTARE TUTORE' : conventie.status}">Status</span>
                                 </td>
                                 <td>
                                     <div class="btn-group">
@@ -137,23 +138,24 @@
                                             <i class="fas fa-file-word"></i>
                                         </a>
                                         
-                                        <!-- Aprobare - doar pentru TRIMISA_TUTORE -->
-                                        <form th:if="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).TRIMISA_TUTORE}" 
-                                              th:action="@{'/tutore/conventie/aproba/' + ${conventie.id}}" method="post" class="d-inline me-1">
-                                            <button type="submit" class="btn btn-success btn-sm" title="Aprobă" 
-                                                    onclick="return confirm('Confirmați aprobarea convenției?')">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                        </form>
+                                       <form th:if="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE}" 
+      th:action="@{'/tutore/conventie/aproba/' + ${conventie.id}}" method="post" class="d-inline me-1">
+    <button type="submit" class="btn btn-success btn-sm" title="Aprobă" 
+            onclick="return confirm('Confirmați aprobarea convenției?')">
+        <i class="fas fa-check"></i>
+    </button>
+</form>
+
                                         
-                                        <!-- Respingere - doar pentru TRIMISA_TUTORE -->
-                                        <form th:if="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).TRIMISA_TUTORE}" 
-                                              th:action="@{'/tutore/conventie/respinge/' + ${conventie.id}}" method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-danger btn-sm" title="Respinge"
-                                                    onclick="return confirm('Sigur doriți să respingeți convenția?')">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </form>
+                                       <!-- Respingere - doar pentru IN_ASTEPTARE_TUTORE -->
+<form th:if="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE}" 
+      th:action="@{'/tutore/conventie/respinge/' + ${conventie.id}}" method="post" class="d-inline">
+    <button type="submit" class="btn btn-danger btn-sm" title="Respinge"
+            onclick="return confirm('Sigur doriți să respingeți convenția?')">
+        <i class="fas fa-times"></i>
+    </button>
+</form>
+
                                     </div>
                                 </td>
                             </tr>
