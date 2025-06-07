@@ -91,7 +91,7 @@
                 <div class="card text-center bg-primary text-white">
                     <div class="card-body">
                         <i class="fas fa-file-signature fa-3x mb-3"></i>
-                        <h5 class="card-title">Convenții Nesemnate</h5>
+                        <h5 class="card-title">Convenții în Așteptare</h5>
                         <p class="card-text" th:text="${conventiiNesemnate.size()}">0</p>
                     </div>
                 </div>
@@ -124,83 +124,52 @@
                     </div>
                 </div>
             </div>
-            
-<!-- Carduri pentru Parteneri și Tutori -->
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card text-center bg-info bg-opacity-25">
-            <div class="card-body">
-                <i class="fas fa-handshake fa-3x mb-3"></i>
-                <h5 class="card-title">Parteneri</h5>
-                <a href="/prodecan/management/partners" class="btn btn-primary btn-sm mt-2">
-                    <i class="fas fa-list me-1"></i>Gestionează Parteneri
-                </a>
-            </div>
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card text-center bg-secondary bg-opacity-25">
-            <div class="card-body">
-                <i class="fas fa-user-tie fa-3x mb-3"></i>
-                <h5 class="card-title">Tutori</h5>
-                <!-- Fragment din dashboard.html care trebuie actualizat -->
-<a href="/prodecan/management/tutori" class="btn btn-primary w-100">
-    <i class="fas fa-chalkboard-teacher fa-3x mb-3 d-block"></i>
-    <h5>Gestionare Tutori</h5>
-    <p class="mb-0">Adaugă și gestionează tutorii pentru convenții</p>
-</a>
-            </div>
-        </div>
-    </div>
-</div>
-        </div>
-        
-        
         
         <!-- Card Semnătură Digitală -->
-<div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">
-            <i class="fas fa-signature me-2"></i>Semnătură Digitală
-        </h5>
-    </div>
-    <div class="card-body">
-        <form th:action="@{/prodecan/upload-semnatura}" method="post" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label for="semnatura" class="form-label">Încărcați semnătura digitală (imagine)</label>
-                <input type="file" 
-                       class="form-control" 
-                       id="semnatura" 
-                       name="semnatura" 
-                       accept="image/*" 
-                       required>
-                <small class="text-muted">Formate acceptate: JPG, PNG. Mărime maximă: 2MB</small>
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-signature me-2"></i>Semnătură Digitală
+                </h5>
             </div>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-upload me-2"></i>Încarcă Semnătura
-            </button>
-        </form>
-    </div>
-</div>
+            <div class="card-body">
+                <form th:action="@{/prodecan/upload-semnatura}" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="semnatura" class="form-label">Încărcați semnătura digitală (imagine)</label>
+                        <input type="file" 
+                               class="form-control" 
+                               id="semnatura" 
+                               name="semnatura" 
+                               accept="image/*" 
+                               required>
+                        <small class="text-muted">Formate acceptate: JPG, PNG. Mărime maximă: 2MB</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Încarcă Semnătura
+                    </button>
+                </form>
+            </div>
+        </div>
 
-<!-- Mesaje de succes/eroare pentru încărcarea semnăturii -->
-<div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-    <i class="fas fa-check-circle me-2"></i>
-    <span th:text="${successMessage}"></span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
+        <!-- Mesaje de succes/eroare pentru încărcarea semnăturii -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
 
-<div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
-    <i class="fas fa-exclamation-circle me-2"></i>
-    <span th:text="${errorMessage}"></span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
 
-        <!-- Convenții Nesemnate -->
+        <!-- Convenții în Așteptarea Prodecanului -->
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-clock me-2"></i>Convenții în Așteptare
+                    <i class="fas fa-clock me-2"></i>Convenții în Așteptarea Mea
                 </h5>
             </div>
             <div class="card-body">
@@ -216,18 +185,18 @@
                         </thead>
                         <tbody>
                             <tr th:if="${conventiiNesemnate.empty}">
-                                <td colspan="4" class="text-center">Nu există convenții în așteptare.</td>
+                                <td colspan="4" class="text-center">Nu există convenții în așteptarea ta.</td>
                             </tr>
                             <tr th:each="conventie : ${conventiiNesemnate}">
                                 <td th:text="${conventie.student != null ? conventie.student.numeComplet : 'N/A'}">Nume Student</td>
-    <td th:text="${conventie.companie != null ? conventie.companie.nume : 'N/A'}">Nume Companie</td>
-    <td th:text="${conventie.dataIntocmirii != null ? #dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy') : 'N/A'}">Data</td>
+                                <td th:text="${conventie.companie != null ? conventie.companie.nume : 'N/A'}">Nume Companie</td>
+                                <td th:text="${conventie.dataIntocmirii != null ? #dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy') : 'N/A'}">Data</td>
                                 <td>
                                     <div class="btn-group">
                                         <form th:action="@{/prodecan/conventie/aproba/{id}(id=${conventie.id})}" 
                                               method="post" class="me-1">
                                             <button class="btn btn-success btn-sm">
-                                                <i class="fas fa-check"></i> Aprobă
+                                                <i class="fas fa-signature"></i> Semnează
                                             </button>
                                         </form>
                                         <form th:action="@{/prodecan/conventie/respinge/{id}(id=${conventie.id})}" 
@@ -245,63 +214,64 @@
             </div>
         </div>
 
-       <!-- Convenții Semnate Recent -->
-<div class="card">
-    <div class="card-header bg-success bg-opacity-25">
-        <h5 class="card-title mb-0">
-            <i class="fas fa-check-circle me-2"></i>Convenții Semnate Recent
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Companie</th>
-                        <th>Data</th>
-                        <th>Acțiuni</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:if="${conventiiSemnate.empty}">
-                        <td colspan="4" class="text-center">Nu există convenții semnate recent.</td>
-                    </tr>
-                    <tr th:each="conventie : ${conventiiSemnate}">
-                        <td th:text="${conventie.student.numeComplet}">Student</td>
-                        <td th:text="${conventie.companie.nume}">Companie</td>
-                        <td th:text="${#dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy')}">Data</td>
-                        <td>
-                            <div class="btn-group">
-                                <!-- Vizualizare HTML -->
-                                <a th:href="@{'/prodecan/conventie-export/' + ${conventie.id}}" 
-                                   class="btn btn-primary btn-sm me-1"
-                                   title="Vizualizează HTML"
-                                   target="_blank">
-                                    <i class="fas fa-eye"></i>
-                                </a>
+        <!-- Convenții Aprobate Final Recent -->
+        <div class="card">
+            <div class="card-header bg-success bg-opacity-25">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-check-circle me-2"></i>Convenții Aprobate Final Recent
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Companie</th>
+                                <th>Data</th>
+                                <th>Acțiuni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${conventiiSemnate.empty}">
+                                <td colspan="4" class="text-center">Nu există convenții aprobate final recent.</td>
+                            </tr>
+                            <tr th:each="conventie : ${conventiiSemnate}">
+                                <td th:text="${conventie.student.numeComplet}">Student</td>
+                                <td th:text="${conventie.companie.nume}">Companie</td>
+                                <td th:text="${#dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy')}">Data</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <!-- Vizualizare HTML -->
+                                        <a th:href="@{'/prodecan/conventie-export/' + ${conventie.id}}" 
+                                           class="btn btn-primary btn-sm me-1"
+                                           title="Vizualizează HTML"
+                                           target="_blank">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
 
-                                <!-- Word -->
-                                <a th:href="@{'/prodecan/conventie-export-word/' + ${conventie.id}}" 
-                                   class="btn btn-success btn-sm me-1"
-                                   title="Descarcă Word">
-                                    <i class="fas fa-file-word"></i>
-                                </a>
+                                        <!-- Word -->
+                                        <a th:href="@{'/prodecan/conventie-export-word/' + ${conventie.id}}" 
+                                           class="btn btn-success btn-sm me-1"
+                                           title="Descarcă Word">
+                                            <i class="fas fa-file-word"></i>
+                                        </a>
 
-                                <!-- PDF -->
-                                <a th:href="@{'/prodecan/conventie-export-pdf/' + ${conventie.id}}" 
-                                   class="btn btn-danger btn-sm"
-                                   title="Descarcă PDF">
-                                    <i class="fas fa-file-pdf"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                                        <!-- PDF -->
+                                        <a th:href="@{'/prodecan/conventie-export-pdf/' + ${conventie.id}}" 
+                                           class="btn btn-danger btn-sm"
+                                           title="Descarcă PDF">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

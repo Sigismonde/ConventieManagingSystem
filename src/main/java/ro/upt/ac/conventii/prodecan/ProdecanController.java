@@ -146,13 +146,13 @@ public class ProdecanController {
             model.addAttribute("totalCompanii", totalCompanii);
             model.addAttribute("totalCadreDidactice", totalCadreDidactice);
             
-            // Preluăm convențiile nesemnate
+            // Preluăm convențiile care așteaptă aprobarea prodecanului (ultimele 3)
             Pageable lastThree = PageRequest.of(0, 3);
             List<Conventie> conventiiNesemnate = conventieRepository
                 .findTop3ByStatusOrderByDataIntocmiriiDesc(ConventieStatus.IN_ASTEPTARE_PRODECAN, lastThree);
             model.addAttribute("conventiiNesemnate", conventiiNesemnate);
 
-            // Preluăm doar ultimele 5 convenții semnate
+            // Preluăm doar ultimele 5 convenții aprobate final
             Pageable topFive = PageRequest.of(0, 5);
             List<Conventie> conventiiSemnate = conventieRepository
                 .findTop5ByStatusOrderByDataIntocmiriiDesc(ConventieStatus.APROBATA, topFive);
@@ -168,7 +168,6 @@ public class ProdecanController {
             model.addAttribute("conventiiNesemnate", new ArrayList<>());
             model.addAttribute("conventiiSemnate", new ArrayList<>());
         }
-        
         
         return "prodecan/dashboard";
     }
@@ -559,9 +558,9 @@ public class ProdecanController {
             Prodecan prodecan = prodecanRepository.findByEmail(user.getEmail());
             
             // DEBUG: Verifică semnătura prodecanului
-            System.out.println("DEBUG APROBARE: Prodecan: " + prodecan.getNumeComplet());
-            System.out.println("DEBUG APROBARE: Are semnătură: " + (prodecan.getSemnatura() != null));
-            if (prodecan.getSemnatura() != null) {
+            System.out.println("DEBUG APROBARE: Prodecan: " + (prodecan != null ? prodecan.getNumeComplet() : "NULL"));
+            System.out.println("DEBUG APROBARE: Are semnătură: " + (prodecan != null && prodecan.getSemnatura() != null));
+            if (prodecan != null && prodecan.getSemnatura() != null) {
                 System.out.println("DEBUG APROBARE: Mărime semnătură: " + prodecan.getSemnatura().length + " bytes");
             }
             
@@ -572,26 +571,35 @@ public class ProdecanController {
             }
 
             Conventie conventie = conventieRepository.findById(id);
-            if (conventie != null) {
-                // Verificarea statusului...
-                conventie.setStatus(ConventieStatus.IN_ASTEPTARE_PRORECTOR);
-                conventie.setDataIntocmirii(new java.sql.Date(System.currentTimeMillis()));
-                conventieRepository.save(conventie);
-                
-                System.out.println("DEBUG APROBARE: Convenție aprobată cu status: " + conventie.getStatus());
-                
-                redirectAttributes.addFlashAttribute("successMessage", 
-                    "Convenția a fost aprobată cu succes și trimisă către prorector pentru aprobarea finală!");
+            if (conventie == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Convenția nu a fost găsită!");
+                return "redirect:/prodecan/conventii";
             }
             
+            // Verificăm dacă convenția este în statusul corect pentru aprobare de prodecan
+            if (conventie.getStatus() != ConventieStatus.IN_ASTEPTARE_PRODECAN) {
+                redirectAttributes.addFlashAttribute("errorMessage", 
+                    "Convenția nu este în starea corectă pentru aprobare de prodecan!");
+                return "redirect:/prodecan/conventii";
+            }
+
+            // Aprobăm convenția și o trimitem la prorector
+            conventie.setStatus(ConventieStatus.IN_ASTEPTARE_PRORECTOR);
+            conventie.setDataIntocmirii(new java.sql.Date(System.currentTimeMillis()));
+            conventieRepository.save(conventie);
+            
+            System.out.println("DEBUG APROBARE: Convenție aprobată cu status: " + conventie.getStatus());
+            
+            redirectAttributes.addFlashAttribute("successMessage", 
+                "Convenția a fost aprobată cu succes și trimisă către prorector pentru aprobarea finală!");
+                
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", 
                 "A apărut o eroare la aprobarea convenției: " + e.getMessage());
         }
         
         return "redirect:/prodecan/conventii";
-    }
- // În ProdecanController
+    } // În ProdecanController
  // Modifică metoda pentru a accepta parametrul Authentication
  // În ProdecanController.java, actualizează metoda addSignatureTable pentru PDF:
 
@@ -1420,47 +1428,42 @@ public class ProdecanController {
                 throw new RuntimeException("Repository-ul nu este injectat");
             }
 
-            // Încercăm să preluăm toate convențiile mai întâi
+            // Preluăm toate convențiile mai întâi pentru debugging
             List<Conventie> toateConventiile = conventieRepository.findAll();
             System.out.println("Total convenții găsite: " + toateConventiile.size());
 
-            // Apoi filtrăm doar după status IN_ASTEPTARE (indiferent de flagul trimisaTutore)
-            List<Conventie> conventiiNesemnate = conventieRepository.findByStatus(ConventieStatus.IN_ASTEPTARE_PRODECAN);
+            // Convenții care așteaptă aprobarea prodecanului
+            List<Conventie> conventiiNesemnate = new ArrayList<>();
             
-            
-            
-            // Adăugăm și convențiile care au status APROBATA_PARTENER
-            List<Conventie> conventiiAprobatePartener = conventieRepository.findByStatus(ConventieStatus.APROBATA_PARTENER);
-            if (conventiiAprobatePartener != null && !conventiiAprobatePartener.isEmpty()) {
-                if (conventiiNesemnate == null) {
-                    conventiiNesemnate = conventiiAprobatePartener;
-                } else {
-                    conventiiNesemnate.addAll(conventiiAprobatePartener);
-                }
-            }
-            
-            // Adăugăm și convențiile care au status IN_ASTEPTARE_PRODECAN
+            // Adăugăm convențiile care sunt în așteptarea prodecanului
             List<Conventie> conventiiAsteptareProdecan = conventieRepository.findByStatus(ConventieStatus.IN_ASTEPTARE_PRODECAN);
             if (conventiiAsteptareProdecan != null && !conventiiAsteptareProdecan.isEmpty()) {
-                if (conventiiNesemnate == null) {
-                    conventiiNesemnate = conventiiAsteptareProdecan;
-                } else {
-                    conventiiNesemnate.addAll(conventiiAsteptareProdecan);
-                }
+                conventiiNesemnate.addAll(conventiiAsteptareProdecan);
             }
             
+            System.out.println("Convenții în așteptare prodecan: " + 
+                (conventiiAsteptareProdecan != null ? conventiiAsteptareProdecan.size() : "null"));
+
+            // Convenții care au fost aprobate de prodecan și trimise către prorector
+            List<Conventie> conventiiTrimiseProrector = conventieRepository.findByStatus(ConventieStatus.IN_ASTEPTARE_PRORECTOR);
+            
+            // Convenții semnate complet (aprobate final)
             List<Conventie> conventiiSemnate = conventieRepository.findByStatus(ConventieStatus.APROBATA);
             
-            System.out.println("Convenții nesemnate: " + 
+            System.out.println("Convenții nesemnate (în așteptare prodecan): " + 
                 (conventiiNesemnate != null ? conventiiNesemnate.size() : "null"));
-            System.out.println("Convenții semnate: " + 
+            System.out.println("Convenții trimise la prorector: " + 
+                (conventiiTrimiseProrector != null ? conventiiTrimiseProrector.size() : "null"));
+            System.out.println("Convenții semnate final: " + 
                 (conventiiSemnate != null ? conventiiSemnate.size() : "null"));
 
             // Inițializăm listele goale dacă e cazul
             conventiiNesemnate = conventiiNesemnate != null ? conventiiNesemnate : new ArrayList<>();
+            conventiiTrimiseProrector = conventiiTrimiseProrector != null ? conventiiTrimiseProrector : new ArrayList<>();
             conventiiSemnate = conventiiSemnate != null ? conventiiSemnate : new ArrayList<>();
 
             model.addAttribute("conventiiNesemnate", conventiiNesemnate);
+            model.addAttribute("conventiiTrimiseProrector", conventiiTrimiseProrector);
             model.addAttribute("conventiiSemnate", conventiiSemnate);
             
             return "prodecan/conventii";
@@ -1471,6 +1474,7 @@ public class ProdecanController {
             
             // Adăugăm liste goale și mesaj de eroare în model
             model.addAttribute("conventiiNesemnate", new ArrayList<>());
+            model.addAttribute("conventiiTrimiseProrector", new ArrayList<>());
             model.addAttribute("conventiiSemnate", new ArrayList<>());
             model.addAttribute("errorMessage", "A apărut o eroare: " + e.getMessage());
             
