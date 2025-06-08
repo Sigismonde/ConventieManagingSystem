@@ -172,22 +172,29 @@
                             <span th:text="${conventie.dataInceput != null ? #dates.format(conventie.dataInceput, 'dd.MM.yyyy') : 'N/A'}"></span> - 
                             <span th:text="${conventie.dataSfarsit != null ? #dates.format(conventie.dataSfarsit, 'dd.MM.yyyy') : 'N/A'}"></span>
                         </td>
-                        <td>
-                            <span th:class="${'badge ' + 
-                                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).NETRIMIS ? 'bg-secondary' : '') +
-                                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PARTENER ? 'bg-warning' : '') +
-                                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_PARTENER ? 'bg-primary' : '') +
-                                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE ? 'bg-info' : '') +
-                                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'bg-teal' : '') +
-                                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA ? 'bg-success' : '') +
-                                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).RESPINSA ? 'bg-danger' : '')}"
-                                th:style="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'background-color: #20c997 !important; color: white;' : ''}"
-                                th:text="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PARTENER ? 'ÎN AȘTEPTARE PARTENER' : 
-                                         conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE ? 'ÎN AȘTEPTARE TUTORE' : 
-                                         conventie.status}">
-                                Status
-                            </span>
-                        </td>
+                        <!-- În templates/student/conventie-list.html - secțiunea cu status-ul -->
+<td>
+    <!-- Culori actualizate pentru status-uri -->
+    <span th:class="${'badge ' + 
+                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).NETRIMIS ? 'bg-secondary' : '') +
+                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PARTENER ? 'bg-warning' : '') +
+                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_PARTENER ? 'bg-primary' : '') +
+                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE ? 'bg-info' : '') +
+                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'bg-teal' : '') +
+                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRODECAN ? 'bg-purple' : '') +
+                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRORECTOR ? 'bg-orange' : '') +
+                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA ? 'bg-success' : '') +
+                (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).RESPINSA ? 'bg-danger' : '')}"
+          th:style="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'background-color: #20c997 !important; color: white;' : 
+                    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRODECAN ? 'background-color: #6f42c1 !important; color: white;' : 
+                    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRORECTOR ? 'background-color: #fd7e14 !important; color: white;' : ''}"
+          th:text="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PARTENER ? 'ÎN AȘTEPTARE PARTENER' : 
+                   conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE ? 'ÎN AȘTEPTARE TUTORE' : 
+                   conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRODECAN ? 'ÎN AȘTEPTARE PRODECAN' : 
+                   conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRORECTOR ? 'ÎN AȘTEPTARE PRORECTOR' : 
+                   conventie.status}">
+    </span>
+</td>
                         <td>
                             <div class="btn-group">
                                 <!-- Vizualizare - pentru toate statusurile -->
