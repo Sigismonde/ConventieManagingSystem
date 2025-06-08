@@ -14,4 +14,5 @@ public interface PartnerRepository extends JpaRepository<Partner, Integer> {
     Optional<Partner> findByEmail(String email);
     List<Partner> findByCompanie(Companie companie);
     List<Partner> findByCompanieId(int companieId);
+    
 }

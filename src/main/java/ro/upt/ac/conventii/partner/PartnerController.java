@@ -10,6 +10,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Arrays;
+
 
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
@@ -95,43 +97,70 @@ public class PartnerController {
     
  // În PartnerController.java - actualizează aceste metode:
 
+ // În PartnerController.java - actualizează aceste metode:
+
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+            return "redirect:/login";
+        }
+        
         User user = (User) authentication.getPrincipal();
-        Partner partner = partnerRepository.findByEmail(user.getEmail())
-                .orElseThrow(() -> new RuntimeException("Partner not found"));
-        
         model.addAttribute("user", user);
-        model.addAttribute("partner", partner);
         
-        // Get company info
-        Companie companie = partner.getCompanie();
-        model.addAttribute("companie", companie);
-        
-        // Get pending conventions - actualizat la IN_ASTEPTARE_PARTENER
-        List<Conventie> conventiiInAsteptare = conventieRepository.findByCompanieAndStatus(
-                companie, ConventieStatus.IN_ASTEPTARE_PARTENER);
-        model.addAttribute("conventiiInAsteptare", conventiiInAsteptare);
-        
-        // Get recently approved conventions (top 5)
-        Pageable topFive = PageRequest.of(0, 5);
-        List<Conventie> conventiiAprobate = conventieRepository.findTop5ByCompanieAndStatusOrderByDataIntocmiriiDesc(
-                companie, ConventieStatus.APROBATA_PARTENER, topFive);
-        model.addAttribute("conventiiAprobate", conventiiAprobate != null ? conventiiAprobate : new ArrayList<>());
+        try {
+            // Găsim partenerul după email
+            Partner partner = partnerRepository.findByEmail(user.getEmail())
+                .orElseThrow(() -> new RuntimeException("Partner not found"));
+            
+            // Convenții în așteptare de aprobare de la partener
+            List<Conventie> conventiiInAsteptare = conventieRepository.findByStatusAndCompanieId(
+                ConventieStatus.IN_ASTEPTARE_PARTENER, partner.getCompanie().getId());
+            
+            // Ultimele 5 convenții aprobate de partener
+            Pageable topFive = PageRequest.of(0, 5);
+            List<ConventieStatus> statusuriAprobate = Arrays.asList(
+                ConventieStatus.APROBATA_PARTENER,
+                ConventieStatus.IN_ASTEPTARE_TUTORE,
+                ConventieStatus.APROBATA_TUTORE,
+                ConventieStatus.IN_ASTEPTARE_PRODECAN,
+                ConventieStatus.IN_ASTEPTARE_PRORECTOR,
+                ConventieStatus.APROBATA
+            );
+            List<Conventie> conventiiAprobate = conventieRepository.findByStatusInAndCompanieId(
+                statusuriAprobate, partner.getCompanie().getId());
+            
+            // Limităm la ultimele 5
+            if (conventiiAprobate.size() > 5) {
+                conventiiAprobate = conventiiAprobate.subList(0, 5);
+            }
+            
+            if (conventiiInAsteptare == null) conventiiInAsteptare = new ArrayList<>();
+            if (conventiiAprobate == null) conventiiAprobate = new ArrayList<>();
+            
+            model.addAttribute("conventiiInAsteptare", conventiiInAsteptare);
+            model.addAttribute("conventiiAprobate", conventiiAprobate);
+            
+        } catch (Exception e) {
+            model.addAttribute("conventiiInAsteptare", new ArrayList<>());
+            model.addAttribute("conventiiAprobate", new ArrayList<>());
+            System.err.println("Error loading data: " + e.getMessage());
+        }
         
         return "partner/dashboard";
     }
 
-    @PostMapping("/conventie/aproba/{id}")
+  
+    @PostMapping("/aproba-conventie/{id}")
     public String aprobaConventie(@PathVariable("id") int id, 
                                  Authentication authentication, 
                                  RedirectAttributes redirectAttributes) {
         try {
             User user = (User) authentication.getPrincipal();
             Partner partner = partnerRepository.findByEmail(user.getEmail())
-                    .orElseThrow(() -> new RuntimeException("Partner not found"));
+                .orElseThrow(() -> new RuntimeException("Partner not found"));
             
-            // Verificăm dacă partenerul are semnătură încărcată
+            // Verificăm dacă partenerul are o semnătură încărcată
             if (partner.getSemnatura() == null) {
                 redirectAttributes.addFlashAttribute("errorMessage", 
                     "Nu puteți aproba convenția fără o semnătură încărcată. Vă rugăm să încărcați mai întâi semnătura în panoul de control.");
@@ -139,39 +168,30 @@ public class PartnerController {
             }
             
             Conventie conventie = conventieRepository.findById(id);
-            
-            if (conventie == null) {
-                redirectAttributes.addFlashAttribute("errorMessage", 
-                    "Convenția nu a fost găsită!");
-                return "redirect:/partner/conventii";
-            }
-            
-            // Check if convention belongs to partner's company
-            if (conventie.getCompanie().getId() != partner.getCompanie().getId()) {
-                redirectAttributes.addFlashAttribute("errorMessage", 
-                    "Nu aveți permisiunea să aprobați această convenție!");
-                return "redirect:/partner/conventii";
-            }
-            
-            // Verificăm dacă a fost trimisă către tutore
-            if (conventie.isTrimisaTutore()) {
-                // Aprobarea de către tutore (care este tot partenerul)
-                conventie.setStatus(ConventieStatus.APROBATA);
-            } else {
-                // Aprobarea de către partenerul de practică - verificăm statusul corect
-                if (conventie.getStatus() != ConventieStatus.IN_ASTEPTARE_PARTENER) {
+            if (conventie != null) {
+                // Verificăm dacă convenția aparține companiei partenerului
+            	if (conventie.getCompanie().getId() != partner.getCompanie().getId())  {
                     redirectAttributes.addFlashAttribute("errorMessage", 
-                        "Convenția nu este în starea corectă pentru aprobare!");
+                        "Nu aveți permisiunea să aprobați această convenție!");
                     return "redirect:/partner/conventii";
                 }
+                
+                // Verificăm dacă convenția este în starea corectă
+                if (conventie.getStatus() != ConventieStatus.IN_ASTEPTARE_PARTENER) {
+                    redirectAttributes.addFlashAttribute("errorMessage", 
+                        "Această convenție nu este în stadiul de așteptare aprobare de la partener!");
+                    return "redirect:/partner/conventii";
+                }
+                
+                // Actualizăm status-ul la APROBATA_PARTENER
                 conventie.setStatus(ConventieStatus.APROBATA_PARTENER);
+                conventie.setDataIntocmirii(new java.sql.Date(System.currentTimeMillis()));
+                conventieRepository.save(conventie);
+                
+                redirectAttributes.addFlashAttribute("successMessage", 
+                    "Convenția a fost aprobată cu succes! Acum poate fi trimisă către tutore.");
             }
             
-            conventieRepository.save(conventie);
-            
-            redirectAttributes.addFlashAttribute("successMessage", 
-                "Convenția a fost aprobată cu succes și semnată digital!");
-                
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", 
                 "Eroare la aprobarea convenției: " + e.getMessage());
@@ -179,23 +199,105 @@ public class PartnerController {
         
         return "redirect:/partner/conventii";
     }
+
+    @PostMapping("/respinge-conventie/{id}")
+    public String respingeConventie(@PathVariable("id") int id, 
+                                   Authentication authentication, 
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            User user = (User) authentication.getPrincipal();
+            Partner partner = partnerRepository.findByEmail(user.getEmail())
+                .orElseThrow(() -> new RuntimeException("Partner not found"));
+            
+            Conventie conventie = conventieRepository.findById(id);
+            if (conventie != null) {
+                // Verificăm dacă convenția aparține companiei partenerului
+            	if (conventie.getCompanie().getId() != partner.getCompanie().getId())  {
+                    redirectAttributes.addFlashAttribute("errorMessage", 
+                        "Nu aveți permisiunea să respingeți această convenție!");
+                    return "redirect:/partner/conventii";
+                }
+                
+                // Verificăm dacă convenția este în starea corectă
+                if (conventie.getStatus() != ConventieStatus.IN_ASTEPTARE_PARTENER) {
+                    redirectAttributes.addFlashAttribute("errorMessage", 
+                        "Această convenție nu este în stadiul de așteptare aprobare de la partener!");
+                    return "redirect:/partner/conventii";
+                }
+                
+                // Actualizăm status-ul la RESPINSA
+                conventie.setStatus(ConventieStatus.RESPINSA);
+                conventie.setDataIntocmirii(new java.sql.Date(System.currentTimeMillis()));
+                conventieRepository.save(conventie);
+                
+                redirectAttributes.addFlashAttribute("successMessage", 
+                    "Convenția a fost respinsă. Studentul va fi notificat și poate modifica convenția.");
+            }
+            
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", 
+                "Eroare la respingerea convenției: " + e.getMessage());
+        }
+        
+        return "redirect:/partner/conventii";
+    }
+
+    @PostMapping("/upload-semnatura")
+    public String uploadSemnatura(@RequestParam("semnatura") MultipartFile file, 
+                                Authentication authentication,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            User user = (User) authentication.getPrincipal();
+            Partner partner = partnerRepository.findByEmail(user.getEmail())
+                .orElseThrow(() -> new RuntimeException("Partner not found"));
+            
+            // Verificăm tipul fișierului
+            if (!file.getContentType().startsWith("image/")) {
+                redirectAttributes.addFlashAttribute("errorMessage", 
+                    "Vă rugăm să încărcați doar fișiere imagine (.jpg, .png).");
+                return "redirect:/partner/dashboard";
+            }
+
+            // Salvăm semnătura
+            partner.setSemnatura(file.getBytes());
+            partnerRepository.save(partner);
+            
+            redirectAttributes.addFlashAttribute("successMessage", 
+                "Semnătura a fost încărcată cu succes!");
+            
+        } catch (IOException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", 
+                "Eroare la încărcarea semnăturii: " + e.getMessage());
+        }
+        
+        return "redirect:/partner/dashboard";
+    }
     
     // List all conventions
     @GetMapping("/conventii")
     public String conventii(Authentication authentication, Model model) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+            return "redirect:/login";
+        }
+        
         User user = (User) authentication.getPrincipal();
-        Partner partner = partnerRepository.findByEmail(user.getEmail())
-                .orElseThrow(() -> new RuntimeException("Partner not found"));
-        
         model.addAttribute("user", user);
-        model.addAttribute("partner", partner);
         
-        // Get company info
-        Companie companie = partner.getCompanie();
-        
-        // Get all conventions for this company
-        List<Conventie> conventii = conventieRepository.findByCompanie(companie);
-        model.addAttribute("conventii", conventii);
+        try {
+            Partner partner = partnerRepository.findByEmail(user.getEmail())
+                .orElseThrow(() -> new RuntimeException("Partner not found"));
+            
+            // TOATE convențiile companiei (pentru management complet)
+            List<Conventie> conventii = conventieRepository.findByCompanieId(partner.getCompanie().getId());
+            
+            if (conventii == null) conventii = new ArrayList<>();
+            
+            model.addAttribute("conventii", conventii);
+            
+        } catch (Exception e) {
+            model.addAttribute("conventii", new ArrayList<>());
+            System.err.println("Error loading conventions: " + e.getMessage());
+        }
         
         return "partner/conventii";
     }
@@ -204,46 +306,7 @@ public class PartnerController {
   
    
     
-    // Reject convention
-    @PostMapping("/conventie/respinge/{id}")
-    public String respingeConventie(@PathVariable("id") int id, 
-                                   Authentication authentication, 
-                                   RedirectAttributes redirectAttributes) {
-        try {
-            User user = (User) authentication.getPrincipal();
-            Partner partner = partnerRepository.findByEmail(user.getEmail())
-                    .orElseThrow(() -> new RuntimeException("Partner not found"));
-            
-            Conventie conventie = conventieRepository.findById(id);
-            
-            if (conventie == null) {
-                redirectAttributes.addFlashAttribute("errorMessage", 
-                    "Convenția nu a fost găsită!");
-                return "redirect:/partner/conventii";
-            }
-            
-            // Check if convention belongs to partner's company
-            if (conventie.getCompanie().getId() != partner.getCompanie().getId()) {
-                redirectAttributes.addFlashAttribute("errorMessage", 
-                    "Nu aveți permisiunea să respingeți această convenție!");
-                return "redirect:/partner/conventii";
-            }
-            
-            // Update status
-            conventie.setStatus(ConventieStatus.RESPINSA);
-            conventieRepository.save(conventie);
-            
-            redirectAttributes.addFlashAttribute("successMessage", 
-                "Convenția a fost respinsă.");
-                
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", 
-                "Eroare la respingerea convenției: " + e.getMessage());
-        }
-        
-        return "redirect:/partner/conventii";
-    }
-    
+   
     // View convention details
     @GetMapping("/conventie-view/{id}")
     public String viewConventie(@PathVariable("id") int id, 
@@ -1827,37 +1890,6 @@ public class PartnerController {
         run.setText(text);
     }
     
-    @PostMapping("/upload-semnatura")
-    public String uploadSemnatura(@RequestParam("semnatura") MultipartFile file, 
-                                Authentication authentication,
-                                RedirectAttributes redirectAttributes) {
-        try {
-            User user = (User) authentication.getPrincipal();
-            Partner partner = partnerRepository.findByEmail(user.getEmail())
-                    .orElseThrow(() -> new RuntimeException("Partner not found"));
-            
-            // Verificăm dacă fișierul este imagine
-            if (!file.getContentType().startsWith("image/")) {
-                redirectAttributes.addFlashAttribute("errorMessage", 
-                    "Vă rugăm să încărcați doar fișiere imagine (.jpg, .png).");
-                return "redirect:/partner/dashboard";
-            }
-
-            // Salvăm semnătura în obiectul Partner
-            partner.setSemnatura(file.getBytes());
-            
-            // Salvăm în baza de date
-            partnerRepository.save(partner);
-            
-            redirectAttributes.addFlashAttribute("successMessage", 
-                "Semnătura a fost încărcată cu succes!");
-            
-        } catch (IOException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", 
-                "Eroare la încărcarea semnăturii: " + e.getMessage());
-        }
-        
-        return "redirect:/partner/dashboard";
-    }
+    
 
 }

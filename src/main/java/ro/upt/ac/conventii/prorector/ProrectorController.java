@@ -82,12 +82,10 @@ public class ProrectorController {
         model.addAttribute("user", user);
 
         try {
-            // Initialize empty lists to avoid null
-            // Modified: Filter conventions with the new status IN_ASTEPTARE_PRORECTOR
+            // Filtrăm convențiile cu statusul IN_ASTEPTARE_PRORECTOR
             List<Conventie> conventiiNesemnate = conventieRepository.findByStatus(ConventieStatus.IN_ASTEPTARE_PRORECTOR);
             
-            // Limit to the last 5 signed conventions
-            // Use PageRequest.of(0, 5) to get the first 5 results
+            // Ultimele 5 convenții aprobate final
             Pageable topFive = PageRequest.of(0, 5);
             List<Conventie> conventiiSemnate = conventieRepository.findTop5ByStatusOrderByDataIntocmiriiDesc(
                 ConventieStatus.APROBATA, topFive);
@@ -95,19 +93,17 @@ public class ProrectorController {
             if (conventiiNesemnate == null) conventiiNesemnate = new ArrayList<>();
             if (conventiiSemnate == null) conventiiSemnate = new ArrayList<>();
             
-            // Add to model
             model.addAttribute("conventiiNesemnate", conventiiNesemnate);
             model.addAttribute("conventiiSemnate", conventiiSemnate);
         } catch (Exception e) {
-            // In case of error, initialize with empty lists
             model.addAttribute("conventiiNesemnate", new ArrayList<>());
             model.addAttribute("conventiiSemnate", new ArrayList<>());
-            // Log error
             System.err.println("Error loading data: " + e.getMessage());
         }
         
         return "prorector/dashboard";
     }
+
     
     
     
@@ -148,11 +144,9 @@ public class ProrectorController {
     }
 
     // Semnare convenție
- // Updated semneazaConventie method in ProrectorController
     @PostMapping("/semneaza-conventie/{id}")
     public String semneazaConventie(@PathVariable("id") int id, Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
-            // Obținem prorectorul care aprobă
             User user = (User) authentication.getPrincipal();
             Prorector prorector = prorectorRepository.findByEmail(user.getEmail());
             
@@ -163,32 +157,32 @@ public class ProrectorController {
                 return "redirect:/prorector/conventii";
             }
 
-            // Găsim convenția
             Conventie conventie = conventieRepository.findById(id);
             if (conventie != null) {
-                // Verificăm dacă convenția este în starea corectă pentru aprobare
+                // Verificăm dacă convenția este în starea corectă pentru aprobare finală
                 if (conventie.getStatus() != ConventieStatus.IN_ASTEPTARE_PRORECTOR) {
                     redirectAttributes.addFlashAttribute("errorMessage", 
                         "Această convenție nu este în stadiul de așteptare aprobare de la prorector!");
                     return "redirect:/prorector/conventii";
                 }
                 
-                // Actualizăm status-ul și salvăm
+                // Actualizăm status-ul la APROBATA (aprobare finală)
                 conventie.setStatus(ConventieStatus.APROBATA);
                 conventie.setDataIntocmirii(new java.sql.Date(System.currentTimeMillis()));
                 conventieRepository.save(conventie);
                 
                 redirectAttributes.addFlashAttribute("successMessage", 
-                    "Convenția a fost aprobată cu succes și semnată digital!");
+                    "Convenția a fost aprobată final cu succes și semnată digital!");
             }
             
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", 
-                "Eroare la semnarea convenției: " + e.getMessage());
+                "Eroare la aprobarea finală a convenției: " + e.getMessage());
         }
         
         return "redirect:/prorector/conventii";
     }
+
 
     @GetMapping("/conventii")
     public String listaConventii(Model model, Authentication authentication) {
@@ -197,19 +191,17 @@ public class ProrectorController {
             model.addAttribute("user", user);
         }
         
-        // Modified: Filter only conventions relevant for prorector (awaiting prorector approval and approved)
-        // Exclude NETRIMIS conventions
+        // Filtrăm doar convențiile relevante pentru prorector
         List<Conventie> conventiiInAsteptare = conventieRepository.findByStatus(ConventieStatus.IN_ASTEPTARE_PRORECTOR);
         List<Conventie> conventiiAprobate = conventieRepository.findByStatus(ConventieStatus.APROBATA);
-        
         List<Conventie> conventiiRespinse = conventieRepository.findByStatus(ConventieStatus.RESPINSA);
         
-        // Initialize with empty lists if needed
+        // Inițializăm cu liste goale dacă e necesar
         if (conventiiInAsteptare == null) conventiiInAsteptare = new ArrayList<>();
         if (conventiiAprobate == null) conventiiAprobate = new ArrayList<>(); 
         if (conventiiRespinse == null) conventiiRespinse = new ArrayList<>();
         
-        // Combine relevant conventions (exclude NETRIMIS)
+        // Combinăm convențiile relevante pentru prorector
         List<Conventie> conventiiPentruProrector = new ArrayList<>();
         conventiiPentruProrector.addAll(conventiiInAsteptare);
         conventiiPentruProrector.addAll(conventiiAprobate);

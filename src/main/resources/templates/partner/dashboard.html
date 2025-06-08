@@ -20,7 +20,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="/partner/conventii">
+                        <a class="nav-link" href="/partner/conventii">
                             <i class="fas fa-file-signature me-1"></i>Convenții
                         </a>
                     </li>
@@ -29,7 +29,7 @@
                     <li class="nav-item">
                         <span class="nav-link">
                             <i class="fas fa-user me-1"></i>
-                            <span th:text="${partner.numeComplet + ' (' + companie.nume + ')'}">Nume Partener (Companie)</span>
+                            <span th:text="${user.numeComplet}">Nume Partener</span>
                         </span>
                     </li>
                     <li class="nav-item">
@@ -57,49 +57,37 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <!-- Card de bun venit -->
+        <!-- Card pentru încărcarea semnăturii -->
         <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-signature me-2"></i>Semnătură Digitală
+                </h5>
+            </div>
             <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-auto">
-                        <i class="fas fa-building fa-3x text-primary"></i>
+                <form th:action="@{/partner/upload-semnatura}" method="post" enctype="multipart/form-data">
+                    <div class="row align-items-end">
+                        <div class="col-md-8">
+                            <label for="semnatura" class="form-label">Încărcați semnătura digitală (imagine)</label>
+                            <input type="file" 
+                                   class="form-control" 
+                                   id="semnatura" 
+                                   name="semnatura" 
+                                   accept="image/*" 
+                                   required>
+                            <small class="text-muted">Formate acceptate: JPG, PNG. Mărime maximă: 2MB</small>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Încarcă Semnătura
+                            </button>
+                        </div>
                     </div>
-                    <div class="col">
-                        <h5 class="card-title mb-1">Bine ați venit, <span th:text="${partner.numeComplet}">Nume Partener</span>!</h5>
-                        <p class="card-text mb-0">
-                            <span class="badge bg-info me-2" th:text="${companie.nume}">Nume Companie</span>
-                            <span class="badge bg-secondary" th:text="${partner.functie}">Funcție</span>
-                        </p>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
 
-        <!-- Statistici -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="card text-center bg-warning text-white h-100">
-                    <div class="card-body">
-                        <i class="fas fa-hourglass-half fa-3x mb-3"></i>
-                        <h5 class="card-title">Convenții în Așteptare</h5>
-                        <p class="card-text display-4" th:text="${conventiiInAsteptare != null ? conventiiInAsteptare.size() : 0}">0</p>
-                        <a th:if="${conventiiInAsteptare != null && !conventiiInAsteptare.empty}" href="/partner/conventii" class="btn btn-light mt-3">Verifică convențiile</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card text-center bg-success text-white h-100">
-                    <div class="card-body">
-                        <i class="fas fa-check-circle fa-3x mb-3"></i>
-                        <h5 class="card-title">Convenții Aprobate</h5>
-                        <p class="card-text display-4" th:text="${conventiiAprobate != null ? conventiiAprobate.size() : 0}">0</p>
-                        <a th:if="${conventiiAprobate != null && !conventiiAprobate.empty}" href="/partner/conventii" class="btn btn-light mt-3">Vezi toate</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Convenții în Așteptare -->
+        <!-- Convenții în așteptare de aprobare -->
         <div class="card mb-4">
             <div class="card-header bg-warning bg-opacity-25">
                 <h5 class="card-title mb-0">
@@ -114,43 +102,63 @@
                                 <th>Student</th>
                                 <th>Perioada</th>
                                 <th>Proiect</th>
-                                <th>Data Întocmirii</th>
+                                <th>Data Trimiterii</th>
+                                <th>Status</th>
                                 <th>Acțiuni</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr th:if="${conventiiInAsteptare == null || conventiiInAsteptare.empty}">
-                                <td colspan="5" class="text-center">Nu există convenții în așteptare.</td>
+                                <td colspan="6" class="text-center">Nu există convenții în așteptare de aprobare.</td>
                             </tr>
-                            <tr th:each="conventie : ${conventii}" th:class="${
-    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PARTENER ? 'table-warning' : 
-    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_PARTENER ? 'table-info' : 
-    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA ? 'table-success' : 
-    conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).RESPINSA ? 'table-danger' : ''}">
+                            <tr th:each="conventie : ${conventiiInAsteptare}">
                                 <td th:text="${conventie.student != null ? conventie.student.numeComplet : 'N/A'}">Nume Student</td>
                                 <td>
                                     <span th:text="${conventie.dataInceput != null ? #dates.format(conventie.dataInceput, 'dd.MM.yyyy') : 'N/A'}"></span> -
                                     <span th:text="${conventie.dataSfarsit != null ? #dates.format(conventie.dataSfarsit, 'dd.MM.yyyy') : 'N/A'}"></span>
                                 </td>
                                 <td th:text="${conventie.numeProiect}">Nume Proiect</td>
-                                <td th:text="${conventie.dataIntocmirii != null ? #dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy') : 'N/A'}">Data Întocmirii</td>
+                                <td th:text="${conventie.dataIntocmirii != null ? #dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy') : 'N/A'}">Data</td>
+                                <td>
+                                    <span class="badge bg-warning">În așteptare aprobare Partener</span>
+                                </td>
                                 <td>
                                     <div class="btn-group">
                                         <!-- Vizualizare -->
-                                        <a th:href="@{'/partner/conventie-view/' + ${conventie.id}}" class="btn btn-primary btn-sm me-1" title="Vizualizează">
+                                        <a th:href="@{'/partner/conventie-export/' + ${conventie.id}}" 
+                                           class="btn btn-secondary btn-sm me-1" 
+                                           title="Vizualizează">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        
+                                        <!-- Word -->
+                                        <a th:href="@{'/partner/conventie-export-word/' + ${conventie.id}}" 
+                                           class="btn btn-success btn-sm me-1"
+                                           title="Descarcă Word">
+                                            <i class="fas fa-file-word"></i>
+                                        </a>
+
+                                        <!-- PDF -->
+                                        <a th:href="@{'/partner/conventie-export-pdf/' + ${conventie.id}}" 
+                                           class="btn btn-danger btn-sm me-1"
+                                           title="Descarcă PDF">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
+                                        
                                         <!-- Aprobare -->
-                                        <form th:action="@{'/partner/conventie/aproba/' + ${conventie.id}}" method="post" class="d-inline me-1">
-                                            <button type="submit" class="btn btn-success btn-sm" title="Aprobă" 
-                                                    onclick="return confirm('Confirmați aprobarea convenției?')">
+                                        <form th:action="@{'/partner/aproba-conventie/' + ${conventie.id}}" method="post" class="d-inline me-1">
+                                            <button type="submit" class="btn btn-success btn-sm" 
+                                                    title="Aprobă convenția"
+                                                    onclick="return confirm('Sunteți sigur că doriți să aprobați această convenție?')">
                                                 <i class="fas fa-check"></i>
                                             </button>
                                         </form>
+                                        
                                         <!-- Respingere -->
-                                        <form th:action="@{'/partner/conventie/respinge/' + ${conventie.id}}" method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-danger btn-sm" title="Respinge"
-                                                    onclick="return confirm('Sigur doriți să respingeți convenția?')">
+                                        <form th:action="@{'/partner/respinge-conventie/' + ${conventie.id}}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-danger btn-sm" 
+                                                    title="Respinge convenția"
+                                                    onclick="return confirm('Sunteți sigur că doriți să respingeți această convenție?')">
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         </form>
@@ -162,46 +170,8 @@
                 </div>
             </div>
         </div>
-        <!-- Card Semnătură Digitală -->
-<div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">
-            <i class="fas fa-signature me-2"></i>Semnătură Digitală
-        </h5>
-    </div>
-    <div class="card-body">
-        <form th:action="@{/partner/upload-semnatura}" method="post" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label for="semnatura" class="form-label">Încărcați semnătura digitală (imagine)</label>
-                <input type="file" 
-                       class="form-control" 
-                       id="semnatura" 
-                       name="semnatura" 
-                       accept="image/*" 
-                       required>
-                <small class="text-muted">Formate acceptate: JPG, PNG. Mărime maximă: 2MB</small>
-            </div>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-upload me-2"></i>Încarcă Semnătura
-            </button>
-        </form>
-    </div>
-</div>
 
-<!-- Mesaje de succes/eroare pentru încărcarea semnăturii -->
-<div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-    <i class="fas fa-check-circle me-2"></i>
-    <span th:text="${successMessage}"></span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-
-<div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
-    <i class="fas fa-exclamation-circle me-2"></i>
-    <span th:text="${errorMessage}"></span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-
-        <!-- Convenții recent aprobate -->
+        <!-- Convenții aprobate -->
         <div class="card">
             <div class="card-header bg-success bg-opacity-25">
                 <h5 class="card-title mb-0">
@@ -217,12 +187,13 @@
                                 <th>Perioada</th>
                                 <th>Proiect</th>
                                 <th>Data Aprobării</th>
+                                <th>Status</th>
                                 <th>Acțiuni</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr th:if="${conventiiAprobate == null || conventiiAprobate.empty}">
-                                <td colspan="5" class="text-center">Nu există convenții aprobate recent.</td>
+                                <td colspan="6" class="text-center">Nu există convenții aprobate recent.</td>
                             </tr>
                             <tr th:each="conventie : ${conventiiAprobate}">
                                 <td th:text="${conventie.student != null ? conventie.student.numeComplet : 'N/A'}">Nume Student</td>
@@ -231,17 +202,41 @@
                                     <span th:text="${conventie.dataSfarsit != null ? #dates.format(conventie.dataSfarsit, 'dd.MM.yyyy') : 'N/A'}"></span>
                                 </td>
                                 <td th:text="${conventie.numeProiect}">Nume Proiect</td>
-                                <td th:text="${conventie.dataIntocmirii != null ? #dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy') : 'N/A'}">Data Aprobării</td>
+                                <td th:text="${conventie.dataIntocmirii != null ? #dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy') : 'N/A'}">Data</td>
+                                <td>
+                                    <span th:class="${'badge ' + 
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_PARTENER ? 'bg-primary' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE ? 'bg-info' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'bg-teal' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRODECAN ? 'bg-warning' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRORECTOR ? 'bg-warning' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA ? 'bg-success' : '')}"
+                                        th:style="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'background-color: #20c997 !important; color: white;' : ''}"
+                                        th:text="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE ? 'ÎN AȘTEPTARE TUTORE' : 
+                                                 conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRODECAN ? 'ÎN AȘTEPTARE PRODECAN' : 
+                                                 conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRORECTOR ? 'ÎN AȘTEPTARE PRORECTOR' : 
+                                                 conventie.status}">Status</span>
+                                </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a th:href="@{'/partner/conventie-export/' + ${conventie.id}}" class="btn btn-primary btn-sm me-1" title="Vizualizează">
+                                        <a th:href="@{'/partner/conventie-export/' + ${conventie.id}}" 
+                                           class="btn btn-primary btn-sm me-1" 
+                                           title="Vizualizează">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a th:href="@{'/partner/conventie-export-pdf/' + ${conventie.id}}" class="btn btn-danger btn-sm me-1" title="Export PDF">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </a>
-                                        <a th:href="@{'/partner/conventie-export-word/' + ${conventie.id}}" class="btn btn-success btn-sm" title="Export Word">
+                                        
+                                        <!-- Word -->
+                                        <a th:href="@{'/partner/conventie-export-word/' + ${conventie.id}}" 
+                                           class="btn btn-success btn-sm me-1"
+                                           title="Descarcă Word">
                                             <i class="fas fa-file-word"></i>
+                                        </a>
+
+                                        <!-- PDF -->
+                                        <a th:href="@{'/partner/conventie-export-pdf/' + ${conventie.id}}" 
+                                           class="btn btn-danger btn-sm"
+                                           title="Descarcă PDF">
+                                            <i class="fas fa-file-pdf"></i>
                                         </a>
                                     </div>
                                 </td>

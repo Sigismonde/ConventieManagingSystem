@@ -29,7 +29,7 @@
                     <li class="nav-item">
                         <span class="nav-link">
                             <i class="fas fa-user me-1"></i>
-                            <span th:text="${user != null ? user.titluAcademic + ' ' + user.numeComplet : 'Utilizator'}">Nume Prorector</span>
+                            <span th:text="${user != null ? user.numeComplet : 'Utilizator'}">Nume Prorector</span>
                         </span>
                     </li>
                     <li class="nav-item">
@@ -78,18 +78,29 @@
                                 </td>
                                 <td th:text="${conventie.dataIntocmirii != null ? #dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy') : 'N/A'}">Data</td>
                                 <td>
+                                    <!-- Status cu culori actualizate -->
                                     <span th:class="${'badge ' + 
-                                    (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).NETRIMIS ? 'bg-info' : '') + 
-                                    (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE ? 'bg-warning' : '') + 
-                                    (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA ? 'bg-success' : '') + 
-                                    (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).RESPINSA ? 'bg-danger' : '')}"
-                                    th:text="${conventie.status}">Status</span>
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).NETRIMIS ? 'bg-secondary' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PARTENER ? 'bg-warning' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_PARTENER ? 'bg-primary' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE ? 'bg-info' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'bg-teal' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRODECAN ? 'bg-warning' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRORECTOR ? 'bg-warning' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA ? 'bg-success' : '') +
+                                        (conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).RESPINSA ? 'bg-danger' : '')}"
+                                        th:style="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).APROBATA_TUTORE ? 'background-color: #20c997 !important; color: white;' : ''}"
+                                        th:text="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PARTENER ? 'ÎN AȘTEPTARE PARTENER' : 
+                                                 conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_TUTORE ? 'ÎN AȘTEPTARE TUTORE' : 
+                                                 conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRODECAN ? 'ÎN AȘTEPTARE PRODECAN' : 
+                                                 conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRORECTOR ? 'ÎN AȘTEPTARE PRORECTOR' : 
+                                                 conventie.status}">Status</span>
                                 </td>
                                 <td th:text="${conventie.cadruDidactic != null ? conventie.cadruDidactic.numeComplet : 'N/A'}">Cadru Didactic</td>
                                 <td>
                                     <div class="btn-group">
                                         <!-- Vizualizare HTML -->
-                                        <a th:href="@{'/conventie-export/' + ${conventie.id}}" class="btn btn-secondary btn-sm me-1" title="Vizualizează">
+                                        <a th:href="@{'/prorector/conventie-export/' + ${conventie.id}}" class="btn btn-secondary btn-sm me-1" title="Vizualizează">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <!-- Word -->
@@ -101,10 +112,12 @@
                                             <i class="fas fa-file-pdf"></i>
                                         </a>
                                         <!-- Acțiuni în funcție de status -->
-                                        <form th:if="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE}" 
+                                        <form th:if="${conventie.status == T(ro.upt.ac.conventii.conventie.ConventieStatus).IN_ASTEPTARE_PRORECTOR}" 
                                               th:action="@{'/prorector/semneaza-conventie/' + ${conventie.id}}" method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-success btn-sm" title="Semnează">
-                                                <i class="fas fa-signature"></i>
+                                            <button type="submit" class="btn btn-success btn-sm" 
+                                                    title="Aprobare Finală și Semnare"
+                                                    onclick="return confirm('Sunteți sigur că doriți să aprobați final și să semnați această convenție?')">
+                                                <i class="fas fa-signature"></i> Aprobă Final
                                             </button>
                                         </form>
                                     </div>

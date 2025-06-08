@@ -57,11 +57,11 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <!-- Convenții în așteptare -->
+        <!-- Convenții în așteptare de aprobare finală -->
         <div class="card mb-4">
             <div class="card-header bg-warning bg-opacity-25">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-clock me-2"></i>Convenții în Așteptare de Aprobare
+                    <i class="fas fa-clock me-2"></i>Convenții în Așteptare de Aprobare Finală
                 </h5>
             </div>
             <div class="card-body">
@@ -80,7 +80,7 @@
                         </thead>
                         <tbody>
                             <tr th:if="${conventiiNesemnate == null || conventiiNesemnate.empty}">
-                                <td colspan="7" class="text-center">Nu există convenții în așteptare.</td>
+                                <td colspan="7" class="text-center">Nu există convenții în așteptare de aprobare finală.</td>
                             </tr>
                             <tr th:each="conventie : ${conventiiNesemnate}">
                                 <td th:text="${conventie.student != null ? conventie.student.numeComplet : 'N/A'}">Nume Student</td>
@@ -115,10 +115,12 @@
                                             <i class="fas fa-file-pdf"></i>
                                         </a>
                                         
-                                        <!-- Butonul de aprobare -->
+                                        <!-- Butonul de aprobare finală -->
                                         <form th:action="@{'/prorector/semneaza-conventie/' + ${conventie.id}}" method="post" class="d-inline me-1">
-                                            <button type="submit" class="btn btn-success btn-sm" title="Semnează">
-                                                <i class="fas fa-signature"></i>
+                                            <button type="submit" class="btn btn-success btn-sm" 
+                                                    title="Aprobare Finală și Semnare"
+                                                    onclick="return confirm('Sunteți sigur că doriți să aprobați final și să semnați această convenție?')">
+                                                <i class="fas fa-signature"></i> Aprobă Final
                                             </button>
                                         </form>
                                     </div>
@@ -130,11 +132,11 @@
             </div>
         </div>
 
-        <!-- Convenții semnate -->
+        <!-- Convenții aprobate final -->
         <div class="card">
             <div class="card-header bg-success bg-opacity-25">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-check-circle me-2"></i>Convenții Aprobate
+                    <i class="fas fa-check-circle me-2"></i>Convenții Aprobate Final
                 </h5>
             </div>
             <div class="card-body">
@@ -153,7 +155,7 @@
                         </thead>
                         <tbody>
                             <tr th:if="${conventiiSemnate == null || conventiiSemnate.empty}">
-                                <td colspan="7" class="text-center">Nu există convenții aprobate.</td>
+                                <td colspan="7" class="text-center">Nu există convenții aprobate final.</td>
                             </tr>
                             <tr th:each="conventie : ${conventiiSemnate}">
                                 <td th:text="${conventie.student != null ? conventie.student.numeComplet : 'N/A'}">Nume Student</td>
@@ -165,7 +167,7 @@
                                 <td th:text="${conventie.dataIntocmirii != null ? #dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy') : 'N/A'}">Data</td>
                                 <td th:text="${conventie.cadruDidactic != null ? conventie.cadruDidactic.numeComplet : 'N/A'}">Cadru Didactic</td>
                                 <td>
-                                    <span class="badge bg-success">Aprobată</span>
+                                    <span class="badge bg-success">Aprobată Final</span>
                                 </td>
                                 <td>
                                     <div class="btn-group">
