@@ -133,9 +133,12 @@
                                 <td>
                                     <div class="btn-group">
                                         <!-- Vizualizare -->
-                                        <a th:href="@{'/tutore/conventie-view/' + ${conventie.id}}" class="btn btn-primary btn-sm me-1" title="Vizualizează">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
+                                       <a th:href="@{'/tutore/conventie-export/' + ${conventie.id}}" 
+   class="btn btn-primary btn-sm me-1" 
+   title="Vizualizează"
+   target="_blank">
+    <i class="fas fa-eye"></i>
+</a>
                                         <!-- Aprobare -->
                                         <form th:action="@{'/tutore/conventie/aproba/' + ${conventie.id}}" method="post" class="d-inline me-1">
                                             <button type="submit" class="btn btn-success btn-sm" title="Aprobă" 
@@ -217,9 +220,12 @@
                                 <td th:text="${conventie.dataIntocmirii != null ? #dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy') : 'N/A'}">Data Aprobării</td>
                                 <td>
                                     <div class="btn-group">
-                                        <a th:href="@{'/tutore/conventie-export/' + ${conventie.id}}" class="btn btn-primary btn-sm me-1" title="Vizualizează">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
+                                        <a th:href="@{'/tutore/conventie-export/' + ${conventie.id}}" 
+   class="btn btn-primary btn-sm me-1" 
+   title="Vizualizează"
+   target="_blank">
+    <i class="fas fa-eye"></i>
+</a>
                                         <a th:href="@{'/tutore/conventie-export-pdf/' + ${conventie.id}}" class="btn btn-danger btn-sm me-1" title="Export PDF">
                                             <i class="fas fa-file-pdf"></i>
                                         </a>
