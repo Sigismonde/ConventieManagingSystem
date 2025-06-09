@@ -1585,6 +1585,7 @@ public class ProdecanController {
 
         return new ResponseEntity<>(out.toByteArray(), headers, HttpStatus.OK);
     }
+ // În ProdecanController.java - actualizează metoda de export HTML
     @GetMapping("/conventie-export/{id}")
     public ResponseEntity<String> exportConventie(@PathVariable("id") int id, Authentication authentication) {
         Conventie conventie = conventieRepository.findById(id);
@@ -1598,19 +1599,14 @@ public class ProdecanController {
 
         String htmlContent = generateConventieHtml(conventie, authentication);
         
-        // Adăugăm BOM și convertim la bytes cu UTF-8
-        byte[] bomBytes = new byte[] { (byte)0xEF, (byte)0xBB, (byte)0xBF };
-        byte[] contentBytes = htmlContent.getBytes(StandardCharsets.UTF_8);
-        byte[] fullContent = new byte[bomBytes.length + contentBytes.length];
-        System.arraycopy(bomBytes, 0, fullContent, 0, bomBytes.length);
-        System.arraycopy(contentBytes, 0, fullContent, bomBytes.length, contentBytes.length);
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_HTML);
-        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename);
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + filename);
         headers.set(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
+        // Adăugăm cache control pentru a forța browser-ul să afișeze conținutul
+        headers.set(HttpHeaders.CACHE_CONTROL, "no-cache");
 
-        return new ResponseEntity<>(new String(fullContent, StandardCharsets.UTF_8), headers, HttpStatus.OK);
+        return new ResponseEntity<>(htmlContent, headers, HttpStatus.OK);
     }
     
     @GetMapping("/conventie-export-pdf/{id}")
@@ -2225,11 +2221,13 @@ public class ProdecanController {
         run.setText(text);
     }
     
+ // În ProdecanController.java - actualizează metoda generateConventieHtml
     private String generateConventieHtml(Conventie conventie, Authentication authentication) {
-    	User user = (User) authentication.getPrincipal();
+        User user = (User) authentication.getPrincipal();
         Prodecan prodecan = prodecanRepository.findByEmail(user.getEmail());
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         StringBuilder html = new StringBuilder();
+        
         html.append("<!DOCTYPE html>\n")
             .append("<html>\n")
             .append("<head>\n")
@@ -2246,6 +2244,7 @@ public class ProdecanController {
             .append("th, td { padding: 8px; text-align: left; }\n")
             .append(".signature-table { border: none; }\n")
             .append(".signature-table td { border: none; text-align: center; padding: 20px; }\n")
+            .append(".signature-image { max-width: 100px; max-height: 50px; }\n")
             .append("</style>\n")
             .append("</head>\n")
             .append("<body>\n");
@@ -2275,6 +2274,9 @@ public class ProdecanController {
             .append(" în calitate de ").append(conventie.getCompanie().getCalitate())
             .append(", cu sediul în ").append(conventie.getCompanie().getAdresa())
             .append(", telefon ").append(conventie.getCompanie().getTelefon())
+            .append(", email ").append(conventie.getCompanie().getEmail())
+            .append(", cod de înregistrare fiscală: ").append(conventie.getCompanie().getCui())
+            .append(", înregistrată la Registrul comerțului cu numărul: ").append(conventie.getCompanie().getNrRegCom())
             .append(", denumită în continuare <strong>partener de practică</strong>,</p>");
 
         // Student
@@ -2296,7 +2298,7 @@ public class ProdecanController {
             .append(", telefon ").append(conventie.getStudent().getTelefon())
             .append(", denumit în continuare <strong>practicant</strong></p></div>");
 
-        // Articolul 1
+     // Articolul 1
         html.append("<h3>Art. 1. Obiectul convenției-cadru</h3>")
             .append("<p>(1) <em>Convenția-cadru</em> stabilește modul în care se organizează și se ")
             .append("desfășoară stagiul de practică în vederea consolidării cunoștințelor teoretice și ")
@@ -2319,8 +2321,8 @@ public class ProdecanController {
             .append("<p>(1) Durata stagiului de practică, precizată în planul de învățământ, este de ")
             .append(conventie.getDurataInPlanulDeInvatamant()).append(" [h].</p>")
             .append("<p>(2) Perioada desfășurării stagiului de practică este conformă structurii anului universitar curent ")
-            .append("de la ").append(dateFormat.format(conventie.getDataInceput()))
-            .append(" până la ").append(dateFormat.format(conventie.getDataSfarsit())).append("</p>");
+            .append("de la ").append(formatDate(conventie.getDataInceput()))
+            .append(" până la ").append(formatDate(conventie.getDataSfarsit())).append("</p>");
 
         // Articolul 4
         html.append("<h3>Art. 4. Plata și obligațiile sociale</h3>")
@@ -2474,9 +2476,9 @@ public class ProdecanController {
         // Articolul 13
         html.append("<h3>Art. 13. Prevederi finale</h3>")
             .append("<p>Această convenție-cadru s-a încheiat în trei exemplare la data: ")
-            .append(dateFormat.format(conventie.getDataIntocmirii())).append("</p>");
+            .append(formatDate(conventie.getDataIntocmirii())).append("</p>");
 
-     // În zona unde se generează tabelul de semnături
+        // Tabel semnături - ACELAȘI ca înainte dar cu semnături
         html.append("<table class='signature-table'>")
             .append("<tr>")
             .append("<th>Universitatea Politehnica Timișoara<br>Rector</th>")
@@ -2489,15 +2491,17 @@ public class ProdecanController {
             .append("<tr>")
             .append("<td>");
 
-        // Verificăm dacă convenția este aprobată și avem semnătură
-        if (conventie.getStatus() == ConventieStatus.APROBATA && prodecan != null && prodecan.getSemnatura() != null) {
+        // Verificăm dacă convenția este aprobată și avem semnătură de prodecan
+        if ((conventie.getStatus() == ConventieStatus.APROBATA || 
+             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR) && 
+            prodecan != null && prodecan.getSemnatura() != null) {
             // Convertim semnătura în Base64 pentru a o putea afișa în HTML
             String base64Signature = Base64.getEncoder().encodeToString(prodecan.getSemnatura());
             
             html.append("Prof. dr. ing. Florin DRĂGAN<br><br>")
                 .append("<img src='data:image/png;base64,")
                 .append(base64Signature)
-                .append("' style='max-width:150px; max-height:70px;'><br>")
+                .append("' class='signature-image'><br>")
                 .append("Data: ").append(dateFormat.format(conventie.getDataIntocmirii()));
         } else {
             html.append("Prof. dr. ing. Florin DRĂGAN<br><br>")
@@ -2506,13 +2510,129 @@ public class ProdecanController {
         }
 
         html.append("</td>")
-            .append("<td>")
-            .append(conventie.getCompanie().getReprezentant())
-            .append("<br><br>Semnătura: ____________<br>Data: ____________</td>")
-            .append("<td>")
-            .append(conventie.getStudent().getNume()).append(" ")
-            .append(conventie.getStudent().getPrenume())
-            .append("<br><br>Semnătura: ____________<br>Data: ____________</td>")
+            .append("<td>");
+            
+        // Semnătura partenerului
+        if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
+            conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
+            conventie.getStatus() == ConventieStatus.APROBATA) {
+            
+            try {
+                List<Partner> partners = partnerRepository.findByCompanieId(conventie.getCompanie().getId());
+                Partner partner = null;
+                
+                if (partners != null && !partners.isEmpty()) {
+                    for (Partner p : partners) {
+                        if (p.getSemnatura() != null) {
+                            partner = p;
+                            break;
+                        }
+                    }
+                }
+                
+                if (partner != null && partner.getSemnatura() != null) {
+                    String base64Signature = Base64.getEncoder().encodeToString(partner.getSemnatura());
+                    html.append(conventie.getCompanie().getReprezentant())
+                        .append("<br><br><img src='data:image/png;base64,")
+                        .append(base64Signature)
+                        .append("' class='signature-image'><br>Data: ")
+                        .append(dateFormat.format(conventie.getDataIntocmirii()));
+                } else {
+                    html.append(conventie.getCompanie().getReprezentant())
+                        .append("<br><br>[Semnătură electronică]<br>Data: ")
+                        .append(dateFormat.format(conventie.getDataIntocmirii()));
+                }
+            } catch (Exception e) {
+                html.append(conventie.getCompanie().getReprezentant())
+                    .append("<br><br>Semnătura: ____________<br>Data: ____________");
+            }
+        } else {
+            html.append(conventie.getCompanie().getReprezentant())
+                .append("<br><br>Semnătura: ____________<br>Data: ____________");
+        }
+            
+        html.append("</td>")
+            .append("<td>");
+            
+        // Semnătura studentului
+        if (conventie.getStatus() != ConventieStatus.NETRIMIS && conventie.getStudent().getSemnatura() != null) {
+            String base64Signature = Base64.getEncoder().encodeToString(conventie.getStudent().getSemnatura());
+            html.append(conventie.getStudent().getNume()).append(" ")
+                .append(conventie.getStudent().getPrenume())
+                .append("<br><br><img src='data:image/png;base64,")
+                .append(base64Signature)
+                .append("' class='signature-image'><br>Data: ")
+                .append(dateFormat.format(conventie.getDataIntocmirii()));
+        } else {
+            html.append(conventie.getStudent().getNume()).append(" ")
+                .append(conventie.getStudent().getPrenume())
+                .append("<br><br>Semnătura: ____________<br>Data: ____________");
+        }
+            
+        html.append("</td>")
+            .append("</tr>")
+            .append("</table>");
+
+        // Am luat la cunoștință
+        html.append("<p class='mt-4'>Am luat la cunoștință,</p>")
+            .append("<table class='signature-table'>")
+            .append("<tr>")
+            .append("<td><strong>Cadru didactic supervizor</strong><br>")
+            .append(conventie.getCadruDidactic().getNume()).append(" ")
+            .append(conventie.getCadruDidactic().getPrenume()).append("<br>")
+            .append("Funcția: ").append(conventie.getCadruDidactic().getFunctie()).append("<br><br>");
+            
+        // Semnătura cadrului didactic (care e de fapt prodecanul)
+        if ((conventie.getStatus() == ConventieStatus.APROBATA || 
+             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR) && 
+            prodecan != null && prodecan.getSemnatura() != null) {
+            String base64Signature = Base64.getEncoder().encodeToString(prodecan.getSemnatura());
+            html.append("<img src='data:image/png;base64,")
+                .append(base64Signature)
+                .append("' class='signature-image'><br>")
+                .append("Data: ").append(dateFormat.format(conventie.getDataIntocmirii()));
+        } else {
+            html.append("Semnătura: ____________<br>")
+                .append("Data: ____________");
+        }
+            
+        html.append("</td>")
+            .append("<td><strong>Tutore</strong><br>")
+            .append(conventie.getTutore().getNume()).append(" ")
+            .append(conventie.getTutore().getPrenume()).append("<br>")
+            .append("Funcția: ").append(conventie.getTutore().getFunctie()).append("<br><br>");
+            
+        // Semnătura tutorelui
+        if (conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
+            conventie.getStatus() == ConventieStatus.APROBATA) {
+            
+            try {
+                Optional<Tutore> tutoreOpt = tutoreRepository.findByEmail(conventie.getTutore().getEmail());
+                if (tutoreOpt.isPresent() && tutoreOpt.get().getSemnatura() != null) {
+                    String base64Signature = Base64.getEncoder().encodeToString(tutoreOpt.get().getSemnatura());
+                    html.append("<img src='data:image/png;base64,")
+                        .append(base64Signature)
+                        .append("' class='signature-image'><br>")
+                        .append("Data: ").append(dateFormat.format(conventie.getDataIntocmirii()));
+                } else {
+                    html.append("[Semnătură electronică]<br>")
+                        .append("Data: ").append(dateFormat.format(conventie.getDataIntocmirii()));
+                }
+            } catch (Exception e) {
+                html.append("Semnătura: ____________<br>")
+                    .append("Data: ____________");
+            }
+        } else {
+            html.append("Semnătura: ____________<br>")
+                .append("Data: ____________");
+        }
+            
+        html.append("</td>")
             .append("</tr>")
             .append("</table>");
 

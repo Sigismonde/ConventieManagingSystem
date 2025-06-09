@@ -139,43 +139,46 @@
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <!-- Vizualizare -->
-                                        <a th:href="@{'/conventie-export/' + ${conventie.id}}" 
-                                           class="btn btn-secondary btn-sm me-1" title="Vizualizează">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        
-                                        <!-- Word -->
-                                        <a th:href="@{'/prodecan/conventie-export-word/' + ${conventie.id}}" 
-                                           class="btn btn-success btn-sm me-1"
-                                           title="Descarcă Word">
-                                            <i class="fas fa-file-word"></i>
-                                        </a>
+    <!-- Vizualizare -->
+    <a th:href="@{'/prodecan/conventie-export/' + ${conventie.id}}" 
+       class="btn btn-secondary btn-sm me-1" 
+       title="Vizualizează"
+       target="_blank">
+        <i class="fas fa-eye"></i>
+    </a>
+    
+    <!-- Word -->
+    <a th:href="@{'/prodecan/conventie-export-word/' + ${conventie.id}}" 
+       class="btn btn-success btn-sm me-1"
+       title="Descarcă Word">
+        <i class="fas fa-file-word"></i>
+    </a>
 
-                                        <!-- PDF -->
-                                        <a th:href="@{'/prodecan/conventie-export-pdf/' + ${conventie.id}}" 
-                                           class="btn btn-danger btn-sm me-1"
-                                           title="Descarcă PDF">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </a>
+    <!-- PDF -->
+    <a th:href="@{'/prodecan/conventie-export-pdf/' + ${conventie.id}}" 
+       class="btn btn-danger btn-sm me-1"
+       title="Descarcă PDF">
+        <i class="fas fa-file-pdf"></i>
+    </a>
 
-                                        <!-- Butonul de aprobare (semnează și trimite la prorector) -->
-                                        <form th:action="@{'/prodecan/conventie/aproba/' + ${conventie.id}}" 
-                                              method="post" class="d-inline me-1">
-                                            <button type="submit" class="btn btn-success btn-sm" title="Semnează și trimite la Prorector">
-                                                <i class="fas fa-signature"></i>
-                                            </button>
-                                        </form>
-                                        
-                                        <!-- Butonul de respingere -->
-                                        <form th:action="@{'/prodecan/conventie/respinge/' + ${conventie.id}}" 
-                                              method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-danger btn-sm" title="Respinge"
-                                                    onclick="return confirm('Sigur doriți să respingeți această convenție?')">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </form>
-                                    </div>
+    <!-- Butonul de aprobare (semnează și trimite la prorector) -->
+    <form th:action="@{'/prodecan/conventie/aproba/' + ${conventie.id}}" 
+          method="post" class="d-inline me-1">
+        <button type="submit" class="btn btn-success btn-sm" title="Semnează și trimite la Prorector">
+            <i class="fas fa-signature"></i>
+        </button>
+    </form>
+    
+    <!-- Butonul de respingere -->
+    <form th:action="@{'/prodecan/conventie/respinge/' + ${conventie.id}}" 
+          method="post" class="d-inline">
+        <button type="submit" class="btn btn-danger btn-sm" title="Respinge"
+                onclick="return confirm('Sigur doriți să respingeți această convenție?')">
+            <i class="fas fa-times"></i>
+        </button>
+    </form>
+</div>
+
                                 </td>
                             </tr>
                         </tbody>
@@ -220,22 +223,23 @@
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a th:href="@{'/prodecan/conventie-export/' + ${conventie.id}}" 
-                                           class="btn btn-primary btn-sm me-1" 
-                                           title="Vizualizează">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a th:href="@{'/prodecan/conventie-export-word/' + ${conventie.id}}" 
-                                           class="btn btn-success btn-sm me-1"
-                                           title="Descarcă Word">
-                                            <i class="fas fa-file-word"></i>
-                                        </a>
-                                        <a th:href="@{'/prodecan/conventie-export-pdf/' + ${conventie.id}}" 
-                                           class="btn btn-danger btn-sm me-1"
-                                           title="Descarcă PDF">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </a>
-                                    </div>
+    <a th:href="@{'/prodecan/conventie-export/' + ${conventie.id}}" 
+       class="btn btn-primary btn-sm me-1" 
+       title="Vizualizează"
+       target="_blank">
+        <i class="fas fa-eye"></i>
+    </a>
+    <a th:href="@{'/prodecan/conventie-export-word/' + ${conventie.id}}" 
+       class="btn btn-success btn-sm me-1"
+       title="Descarcă Word">
+        <i class="fas fa-file-word"></i>
+    </a>
+    <a th:href="@{'/prodecan/conventie-export-pdf/' + ${conventie.id}}" 
+       class="btn btn-danger btn-sm me-1"
+       title="Descarcă PDF">
+        <i class="fas fa-file-pdf"></i>
+    </a>
+</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -279,22 +283,23 @@
                                 <td th:text="${conventie.cadruDidactic.numeComplet}">Cadru Didactic</td>
                                 <td>
                                     <div class="btn-group">
-                                        <a th:href="@{'/prodecan/conventie-export/' + ${conventie.id}}" 
-                                           class="btn btn-primary btn-sm me-1" 
-                                           title="Vizualizează">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a th:href="@{'/prodecan/conventie-export-word/' + ${conventie.id}}" 
-                                           class="btn btn-success btn-sm me-1"
-                                           title="Descarcă Word">
-                                            <i class="fas fa-file-word"></i>
-                                        </a>
-                                        <a th:href="@{'/prodecan/conventie-export-pdf/' + ${conventie.id}}" 
-                                           class="btn btn-danger btn-sm me-1"
-                                           title="Descarcă PDF">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </a>
-                                    </div>
+    <a th:href="@{'/prodecan/conventie-export/' + ${conventie.id}}" 
+       class="btn btn-primary btn-sm me-1" 
+       title="Vizualizează"
+       target="_blank">
+        <i class="fas fa-eye"></i>
+    </a>
+    <a th:href="@{'/prodecan/conventie-export-word/' + ${conventie.id}}" 
+       class="btn btn-success btn-sm me-1"
+       title="Descarcă Word">
+        <i class="fas fa-file-word"></i>
+    </a>
+    <a th:href="@{'/prodecan/conventie-export-pdf/' + ${conventie.id}}" 
+       class="btn btn-danger btn-sm me-1"
+       title="Descarcă PDF">
+        <i class="fas fa-file-pdf"></i>
+    </a>
+</div>
                                 </td>
                             </tr>
                         </tbody>
