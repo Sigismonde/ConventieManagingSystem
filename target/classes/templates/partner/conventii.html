@@ -182,10 +182,10 @@
                                 <!-- Acțiuni -->
                                 <td>
                                     <div class="d-flex flex-wrap gap-1">
-                                        <!-- Vizualizare - pentru toate statusurile -->
+                                        <!-- Vizualizare în browser - pentru toate statusurile -->
                                         <a th:href="@{'/partner/conventie-export/' + ${conventie.id}}" 
                                            class="btn btn-outline-primary btn-sm" 
-                                           title="Vizualizează HTML"
+                                           title="Vizualizează în browser"
                                            target="_blank">
                                             <i class="fas fa-eye"></i>
                                         </a>
@@ -210,7 +210,7 @@
                                               method="post" class="d-inline">
                                             <button type="submit" class="btn btn-success btn-sm" 
                                                     title="Aprobă convenția"
-                                                    onclick="return confirm('Sunteți sigur că doriți să aprobați această convenție?')">
+                                                    onclick="return confirm('Sunteți sigur că doriți să aprobați această convenție? Verificați că toate informațiile sunt corecte și că aveți semnătura încărcată.')">
                                                 <i class="fas fa-check"></i>
                                             </button>
                                         </form>
@@ -221,7 +221,7 @@
                                               method="post" class="d-inline">
                                             <button type="submit" class="btn btn-danger btn-sm" 
                                                     title="Respinge convenția"
-                                                    onclick="return confirm('Sunteți sigur că doriți să respingeți această convenție?')">
+                                                    onclick="return confirm('Sunteți sigur că doriți să respingeți această convenție? Studentul va trebui să o modifice și să o retrimită.')">
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         </form>
@@ -255,6 +255,16 @@
                                     <li><span class="badge bg-danger me-2">Respinsă</span> - Convenția a fost respinsă</li>
                                 </ul>
                             </div>
+                        </div>
+                        
+                        <!-- Informații importante pentru parteneri -->
+                        <div class="alert alert-info mt-3 mb-0">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Informații importante:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Semnătura digitală:</strong> Pentru a aproba convențiile, trebuie să aveți o semnătură digitală încărcată în <a href="/partner/dashboard">panoul de control</a>.</li>
+                                <li><strong>Verificare student:</strong> Înainte de aprobare, verificați că studentul și-a încărcat semnătura (vizibilă în documentele exportate).</li>
+                                <li><strong>Vizualizare:</strong> Folosiți butonul <i class="fas fa-eye"></i> pentru a vedea convenția în browser înainte de aprobare.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
