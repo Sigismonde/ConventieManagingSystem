@@ -127,10 +127,12 @@
                                 <td>
                                     <div class="btn-group">
                                         <!-- Vizualizare -->
-                                        <a th:href="@{'/prorector/conventie-export/' + ${conventie.id}}" class="btn btn-secondary btn-sm me-1" title="Vizualizează">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        
+                                        <a th:href="@{'/prorector/conventie-export/' + ${conventie.id}}" 
+   class="btn btn-secondary btn-sm me-1" 
+   title="Vizualizează"
+   target="_blank">
+    <i class="fas fa-eye"></i>
+</a>
                                         <!-- Word -->
                                         <a th:href="@{'/prorector/conventie-export-word/' + ${conventie.id}}" 
                                            class="btn btn-success btn-sm me-1"
@@ -199,9 +201,12 @@
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a th:href="@{'/prorector/conventie-export/' + ${conventie.id}}" class="btn btn-primary btn-sm me-1" title="Vizualizează">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
+                                       <a th:href="@{'/prorector/conventie-export/' + ${conventie.id}}" 
+   class="btn btn-secondary btn-sm me-1" 
+   title="Vizualizează"
+   target="_blank">
+    <i class="fas fa-eye"></i>
+</a>
                                         
                                         <!-- Word -->
                                         <a th:href="@{'/prorector/conventie-export-word/' + ${conventie.id}}" 

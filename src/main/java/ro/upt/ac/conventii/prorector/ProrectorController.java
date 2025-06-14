@@ -212,32 +212,22 @@ public class ProrectorController {
         return "prorector/lista-conventii";
     }
 
+ // În ProrectorController.java - actualizează metoda exportConventie
+
     @GetMapping("/conventie-export/{id}")
-    public ResponseEntity<byte[]> exportConventie(@PathVariable("id") int id, Authentication authentication) {
+    public ResponseEntity<String> exportConventie(@PathVariable("id") int id, Authentication authentication) {
         Conventie conventie = conventieRepository.findById(id);
         if (conventie == null) {
             return ResponseEntity.notFound().build();
         }
 
-        String filename = String.format("conventie_%s_%s.html", 
-            conventie.getStudent().getNume().replaceAll("\\s+", "_"),
-            conventie.getCompanie().getNume().replaceAll("\\s+", "_"));
-        
         String htmlContent = generateConventieHtml(conventie, authentication);
         
-        // Adăugăm BOM (Byte Order Mark) pentru UTF-8 ca să recunoască browserul codificarea corect
-        byte[] bomBytes = new byte[] { (byte)0xEF, (byte)0xBB, (byte)0xBF };
-        byte[] contentBytes = htmlContent.getBytes(StandardCharsets.UTF_8);
-        byte[] fullContent = new byte[bomBytes.length + contentBytes.length];
-        System.arraycopy(bomBytes, 0, fullContent, 0, bomBytes.length);
-        System.arraycopy(contentBytes, 0, fullContent, bomBytes.length, contentBytes.length);
-        
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType("text/html;charset=UTF-8"));
-        headers.setContentDispositionFormData("attachment", filename);
-        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        headers.setContentType(MediaType.TEXT_HTML);
+        headers.set("Content-Type", "text/html; charset=UTF-8");
         
-        return new ResponseEntity<>(fullContent, headers, HttpStatus.OK);
+        return new ResponseEntity<>(htmlContent, headers, HttpStatus.OK);
     }
 
     @GetMapping("/conventie-export-pdf/{id}")
@@ -559,11 +549,14 @@ public class ProrectorController {
         titleRun.addBreak();
     }
 
+ // În ProrectorController.java - actualizează metoda generateConventieHtml
+
     private String generateConventieHtml(Conventie conventie, Authentication authentication) {
-    	User user = (User) authentication.getPrincipal();
+        User user = (User) authentication.getPrincipal();
         Prorector prorector = prorectorRepository.findByEmail(user.getEmail());
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         StringBuilder html = new StringBuilder();
+        
         html.append("<!DOCTYPE html>\n")
             .append("<html>\n")
             .append("<head>\n")
@@ -580,6 +573,7 @@ public class ProrectorController {
             .append("th, td { padding: 8px; text-align: left; }\n")
             .append(".signature-table { border: none; }\n")
             .append(".signature-table td { border: none; text-align: center; padding: 20px; }\n")
+            .append(".signature-image { max-width: 100px; max-height: 50px; }\n")
             .append("</style>\n")
             .append("</head>\n")
             .append("<body>\n");
@@ -630,187 +624,10 @@ public class ProrectorController {
             .append(", telefon ").append(conventie.getStudent().getTelefon())
             .append(", denumit în continuare <strong>practicant</strong></p></div>");
 
-        // Articolul 1
-        html.append("<h3>Art. 1. Obiectul convenției-cadru</h3>")
-            .append("<p>(1) <em>Convenția-cadru</em> stabilește modul în care se organizează și se ")
-            .append("desfășoară stagiul de practică în vederea consolidării cunoștințelor teoretice și ")
-            .append("formarea abilităților practice, spre a le aplica în concordanță cu specializarea pentru ")
-            .append("care se instruiește studentul practicant.</p>")
-            .append("<p>(2) Stagiul de practică este realizat de practicant în vederea dobândirii ")
-            .append("competențelor profesionale menționate în Portofoliul de practică care este corelat cu fișa disciplinei de practică, ")
-            .append("parte integrantă a prezentei convenții. ")
-            .append("Locul desfășurării stagiului de practică este: ").append(conventie.getLoculDesfasurarii()).append("</p>")
-            .append("<p>(3) Modalitățile de derulare și conținutul stagiului de practică sunt descrise în ")
-            .append("prezenta convenție-cadru și în portofoliul de practică din anexă.</p>");
+        // Include TOATE articolele (1-13) - la fel ca în StudentController
+        addAllArticlesToHtml(html, conventie, dateFormat);
 
-        // Articolul 2
-        html.append("<h3>Art. 2. Statutul practicantului</h3>")
-            .append("<p>Practicantul rămâne, pe toată durata stagiului de pregătire practică, student al ")
-            .append("Universității Politehnica Timișoara.</p>");
-
-        // Articolul 3
-        html.append("<h3>Art. 3. Durata și perioada desfășurării stagiului de practică</h3>")
-            .append("<p>(1) Durata stagiului de practică, precizată în planul de învățământ, este de ")
-            .append(conventie.getDurataInPlanulDeInvatamant()).append(" [h].</p>")
-            .append("<p>(2) Perioada desfășurării stagiului de practică este conformă structurii anului universitar curent ")
-            .append("de la ").append(dateFormat.format(conventie.getDataInceput()))
-            .append(" până la ").append(dateFormat.format(conventie.getDataSfarsit())).append("</p>");
-
-        // Articolul 4
-        html.append("<h3>Art. 4. Plata și obligațiile sociale</h3>")
-            .append("<p>(1) Stagiul de pregătire practică (se bifează situația corespunzătoare):</p>")
-            .append("<p>☐ - se efectuează în cadrul unui contract de muncă, cei doi parteneri putând să beneficieze ")
-            .append("de prevederile Legii nr. 72/2007 privind stimularea încadrării în muncă a elevilor și studenților;</p>")
-            .append("<p>☐ - nu se efectuează în cadrul unui contract de muncă;</p>")
-            .append("<p>☐ - se efectuează în cadrul unui proiect finanțat prin Fondul Social European;</p>")
-            .append("<p>☐ - se efectuează în cadrul proiectului ...</p>")
-            .append("<p>(2) În cazul angajării ulterioare, perioada stagiului nu va fi considerată ca vechime ")
-            .append("în muncă în situația în care convenția nu se derulează în cadrul unui contract de muncă.</p>")
-            .append("<p>(3) Practicantul nu poate pretinde un salariu din partea partenerului de practică, cu ")
-            .append("excepția situației în care practicantul are statut de angajat.</p>")
-            .append("<p>(4) Partenerul de practică poate totuși acorda practicantului o indemnizație, ")
-            .append("gratificare, primă sau avantaje în natură, conform legislației în vigoare.</p>");
-
-        // Articolul 5
-        html.append("<h3>Art. 5. Responsabilitățile practicantului</h3>")
-            .append("<p>(1) Practicantul are obligația, ca pe durata derulării stagiului de practică, să ")
-            .append("respecte programul de lucru stabilit și să execute activitățile specificate de tutore ")
-            .append("în conformitate cu portofoliul de practică, în condițiile respectării cadrului legal cu ")
-            .append("privire la volumul și dificultatea acestora.</p>")
-            .append("<p>(2) Pe durata stagiului, practicantul respectă regulamentul de ordine interioară al ")
-            .append("partenerului de practică. În cazul nerespectării acestui regulament, conducătorul ")
-            .append("partenerului de practică își rezervă dreptul de a anula convenția-cadru, după ce în ")
-            .append("prealabil a ascultat punctul de vedere al practicantului și al îndrumătorului de ")
-            .append("practică și a înștiințat conducătorul facultății unde practicantul este înmatriculat ")
-            .append("și după primirea confirmării de primire a acestei informații. Această situație conduce la refacerea stagiului de practică și la susținerea unui nou colocviu de evaluare în anul universitar următor.</p>")
-            .append("<p>(3) Practicantul are obligația de a respecta normele de securitate și sănătate în ")
-            .append("muncă pe care le-a însușit de la reprezentantul partenerului de practică înainte de ")
-            .append("începerea stagiului de practică.</p>")
-            .append("<p>(4) Practicantul se angajează să nu folosească, în niciun caz, informațiile la care ")
-            .append("are acces în timpul stagiului despre partenerul de practică sau clienții săi, pentru a ")
-            .append("le comunica unui terț sau pentru a le publica, chiar după terminarea stagiului, decât ")
-            .append("cu acordul respectivului partener de practică.</p>");
-
-        // Articolul 6
-        html.append("<h3>Art. 6. Responsabilitățile partenerului de practică</h3>")
-            .append("<p>(1) Partenerul de practică va stabili un <em>tutore pentru stagiul de practică</em>, ")
-            .append("selectat dintre salariații proprii și ale cărui obligații sunt menționate în portofoliul ")
-            .append("de practică, parte integrantă a convenției-cadru.</p>")
-            .append("<p>(2) În cazul nerespectării obligațiilor de către practicant, tutorele va contacta ")
-            .append("cadrul didactic supervizor, responsabil de practică, aplicându-se sancțiuni conform ")
-            .append("legilor și regulamentelor în vigoare.</p>")
-            .append("<p>(3) Înainte de începerea stagiului de practică, partenerul are obligația de a face ")
-            .append("practicantului instructajul cu privire la normele de securitate și sănătate în muncă, ")
-            .append("pentru fiecare loc distinct de practică, în conformitate cu legislația în vigoare. ")
-            .append("Printre responsabilitățile sale, partenerul de practică va lua măsurile necesare pentru ")
-            .append("securitatea și sănătatea în muncă a practicantului, precum și pentru comunicarea ")
-            .append("regulilor de prevenire a riscurilor profesionale.</p>")
-            .append("<p>(4) Partenerul de practică trebuie să pună la dispoziția practicantului toate ")
-            .append("mijloacele necesare pentru desfășurarea activităților precizate în portofoliul de practică.</p>")
-            .append("<p>(5) Partenerul de practică are obligația de a asigura practicantului accesul liber ")
-            .append("la serviciul de medicina muncii, pe durata derulării pregătirii practice.</p>")
-            .append("<p>(6) În urma desfășurării cu succes a stagiului, partenerul de practică va acorda ")
-            .append("studentului, la cerere, o adeverință constatatoare.</p>");
-
-        // Articolul 7
-        html.append("<h3>Art. 7. Obligațiile organizatorului de practică</h3>")
-            .append("<p>(1) Organizatorul de practică desemnează un cadru didactic supervizor, responsabil ")
-            .append("cu planificarea, organizarea și supravegherea desfășurării pregătirii practice. ")
-            .append("Cadrul didactic supervizor responsabil de practică, împreună cu tutorele desemnat de ")
-            .append("partenerul de practică stabilesc tematica de practică și competențele profesionale ")
-            .append("care fac obiectul stagiului de pregătire practică.</p>")
-            .append("<p>(2) În cazul în care derularea stagiului de pregătire practică nu este conformă cu ")
-            .append("angajamentele luate de către partenerul de practică în cadrul prezentei convenții, ")
-            .append("conducătorul organizatorului de practică poate decide întreruperea stagiului de ")
-            .append("pregătire practică conform convenției-cadru, după informarea prealabilă a ")
-            .append("conducătorului partenerului de practică și după primirea confirmării de primire a ")
-            .append("acestei informații.</p>");
-
-        // Articolul 8
-        html.append("<h3>Art. 8. Persoane desemnate de organizatorul de practică și partenerul de practică</h3>")
-            .append("<p>(1) <strong>Tutorele</strong> (persoana care va avea responsabilitatea practicantului din partea partenerului de practică):</p>")
-            .append("<p>Dl/Dna ").append(conventie.getTutore().getNume()).append(" ").append(conventie.getTutore().getPrenume()).append("<br>")
-            .append("Funcția: ").append(conventie.getTutore().getFunctie()).append("<br>")
-            .append("Telefon: ").append(conventie.getTutore().getTelefon()).append("<br>")
-            .append("Email: ").append(conventie.getTutore().getEmail()).append("</p>")
-            .append("<p>(2) <strong>Cadrul didactic supervizor</strong>, responsabil cu urmărirea derulării stagiului de practică din partea organizatorului de practică:</p>")
-            .append("<p>Dl/Dna ").append(conventie.getCadruDidactic().getNume()).append(" ").append(conventie.getCadruDidactic().getPrenume()).append("<br>")
-            .append("Funcția: ").append(conventie.getCadruDidactic().getFunctie()).append("<br>")
-            .append("Telefon: ").append(conventie.getCadruDidactic().getTelefon()).append("<br>")
-            .append("Email: ").append(conventie.getCadruDidactic().getEmail()).append("</p>");
-
-        // Articolul 9
-        html.append("<h3>Art. 9. Evaluarea stagiului de pregătire practică prin credite transferabile</h3>")
-            .append("<p>Numărul de credite transferabile ce vor fi obținute în urma desfășurării stagiului ")
-            .append("de practică este de ").append(conventie.getNumarCredite()).append(".</p>");
-
-        // Articolul 10
-        html.append("<h3>Art. 10. Raportul privind stagiul de pregătire practică</h3>")
-            .append("<p>(1) În timpul derulării stagiului de practică, tutorele, împreună cu cadrul ")
-            .append("didactic supervizor, vor evalua practicantul în permanență. Vor fi monitorizate și ")
-            .append("evaluate atât nivelul de dobândire a competențelor profesionale, cât și ")
-            .append("comportamentul și modalitatea de integrare a practicantului în activitatea ")
-            .append("partenerului de practică (disciplină, punctualitate, responsabilitate în rezolvarea ")
-            .append("sarcinilor, respectarea regulamentului de ordine interioară al partenerului de practică).</p>")
-            .append("<p>(2) La finalul stagiului de practică, tutorele completează atestatul de practică ")
-            .append("și opțional fișa de evaluare, pe baza evaluării nivelului de dobândire a ")
-            .append("competențelor de către practicant. Rezultatul acestei evaluări va sta la baza notării ")
-            .append("practicantului de către cadrul didactic supervizor.</p>")
-            .append("<p>La finalul stagiului de practică, studentul elaborează un caiet de practică, ")
-            .append("însușit și de tutorele din partea partenerului de practică. Atestatul și fișa de ")
-            .append("evaluare completate de tutore vor sta la baza notării studentului conform ")
-            .append("<em>Regulamentului cadru de organizare și desfășurare a practicii studenților în UPT.</em></p>")
-            .append("<p>(3) Periodic și după încheierea stagiului de practică, practicantul va prezenta un ")
-            .append("<em>caiet de practică</em> care va cuprinde:</p>")
-            .append("<ul>")
-            .append("<li>denumirea modulului de pregătire;</li>")
-            .append("<li>competențe exersate;</li>")
-            .append("<li>activități desfășurate pe perioada stagiului de practică;</li>")
-            .append("<li>observații personale privitoare la activitatea depusă.</li>")
-            .append("</ul>")
-            .append("<p>(4) Pentru studiile de licență, în urma unui colocviu susținut în instituția de ")
-            .append("învățământ superior, pe baza documentelor de practică, calificativul foarte bine/ ")
-            .append("bine/ satisfăcător emis de instituția gazdă se omologhează cu calificativul ")
-            .append("<em>promovat</em> în catalogul disciplinei practică, iar calificativul nesatisfăcător ")
-            .append("emis de instituția gazdă se omologhează cu calificativul <em>nepromovat</em> în ")
-            .append("catalogul disciplinei practică.</p>")
-            .append("<p>(5) Pentru studiile de master, în urma unui colocviu susținut în instituția de ")
-            .append("învățământ superior, pe baza documentelor de practică, calificativul foarte bine/ ")
-            .append("bine/ satisfăcător emis de instituția gazdă se echivalează cu note de promovare în ")
-            .append("catalogul disciplinei practică (5-10), iar calificativul nesatisfăcător emis de ")
-            .append("instituția gazdă se echivalează cu note de nepromovare în catalogul disciplinei practică.</p>");
-
-        // Articolul 11
-        html.append("<h3>Art. 11. Sănătatea și securitatea în muncă</h3>")
-            .append("<p>(1) Practicantul anexează prezentului contract dovada asigurării medicale ")
-            .append("valabile în perioada și pe teritoriul statului unde se desfășoară stagiul de practică.</p>")
-            .append("<p>(2) Partenerul de practică are obligația respectării prevederilor legale cu ")
-            .append("privire la sănătatea și securitatea în muncă a practicatului pe durata stagiului de practică.</p>")
-            .append("<p>(3) Practicantului i se asigură protecție socială conform legislației în vigoare. ")
-            .append("Ca urmare, conform dispozițiilor Legii nr. 346/2002 privind asigurările pentru ")
-            .append("accidente de muncă și boli profesionale, cu modificările și completările ulterioare, ")
-            .append("practicantul beneficiază de legislația privitoare la accidentele de muncă pe toată ")
-            .append("durata efectuării pregătirii practice.</p>")
-            .append("<p>(4) În cazul unui accident suferit de practicant, fie în cursul lucrului, fie în ")
-            .append("timpul deplasării la lucru, partenerul de practică se angajează să înștiințeze ")
-            .append("asiguratorul cu privire la accidentul care a avut loc.</p>");
-
-        // Articolul 12
-        html.append("<h3>Art. 12. Condiții facultative de desfășurare a stagiului de pregătire practică</h3>")
-            .append("<p>(1) Îndemnizație, gratificări sau prime acordate practicantului:</p>")
-            .append("<p>").append(conventie.getIndemnizatii()).append("</p>")
-            .append("<p>(2) Avantaje eventuale (plata transportului de la și la locul desfășurării stagiului de practică, ")
-            .append("tichete de masă, acces la cantina partenerului de practică etc.):</p>")
-            .append("<p>").append(conventie.getAvantaje()).append("</p>")
-            .append("<p>(3) Alte precizări:</p>")
-            .append("<p>").append(conventie.getAltePrecizari()).append("</p>");
-
-        // Articolul 13
-        html.append("<h3>Art. 13. Prevederi finale</h3>")
-            .append("<p>Această convenție-cadru s-a încheiat în trei exemplare la data: ")
-            .append(dateFormat.format(conventie.getDataIntocmirii())).append("</p>");
-
-     // În zona unde se generează tabelul de semnături
+        // Tabel semnături - ACTUALIZAT pentru a arăta semnăturile corect
         html.append("<table class='signature-table'>")
             .append("<tr>")
             .append("<th>Universitatea Politehnica Timișoara<br>Rector</th>")
@@ -823,7 +640,7 @@ public class ProrectorController {
             .append("<tr>")
             .append("<td>");
 
-     // Verificăm dacă convenția este aprobată și avem semnătură
+        // Verificăm dacă convenția este aprobată și avem semnătură prorector
         if (conventie.getStatus() == ConventieStatus.APROBATA && prorector != null && prorector.getSemnatura() != null) {
             // Convertim semnătura în Base64 pentru a o putea afișa în HTML
             String base64Signature = Base64.getEncoder().encodeToString(prorector.getSemnatura());
@@ -831,7 +648,7 @@ public class ProrectorController {
             html.append("Prof. dr. ing. Florin DRĂGAN<br><br>")
                 .append("<img src='data:image/png;base64,")
                 .append(base64Signature)
-                .append("' style='max-width:150px; max-height:70px;'><br>")
+                .append("' class='signature-image'><br>")
                 .append("<span style='font-size:10pt;'>(p.p.)</span><br>") // Adăugăm notația "p.p."
                 .append("Data: ").append(dateFormat.format(conventie.getDataIntocmirii()));
         } else {
@@ -839,19 +656,341 @@ public class ProrectorController {
                 .append("Semnătura: ____________<br>")
                 .append("Data: ____________");
         }
+        
         html.append("</td>")
-            .append("<td>")
-            .append(conventie.getCompanie().getReprezentant())
-            .append("<br><br>Semnătura: ____________<br>Data: ____________</td>")
-            .append("<td>")
-            .append(conventie.getStudent().getNume()).append(" ")
-            .append(conventie.getStudent().getPrenume())
-            .append("<br><br>Semnătura: ____________<br>Data: ____________</td>")
+            .append("<td>");
+            
+        // Semnătura partenerului
+        if (conventie.getStatus() == ConventieStatus.APROBATA_PARTENER || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
+            conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
+            conventie.getStatus() == ConventieStatus.APROBATA) {
+            
+            try {
+                List<Partner> partners = partnerRepository.findByCompanieId(conventie.getCompanie().getId());
+                Partner partner = null;
+                
+                if (partners != null && !partners.isEmpty()) {
+                    for (Partner p : partners) {
+                        if (p.getSemnatura() != null) {
+                            partner = p;
+                            break;
+                        }
+                    }
+                }
+                
+                if (partner != null && partner.getSemnatura() != null) {
+                    String base64Signature = Base64.getEncoder().encodeToString(partner.getSemnatura());
+                    html.append(conventie.getCompanie().getReprezentant())
+                        .append("<br><br><img src='data:image/png;base64,")
+                        .append(base64Signature)
+                        .append("' class='signature-image'><br>Data: ")
+                        .append(dateFormat.format(conventie.getDataIntocmirii()));
+                } else {
+                    html.append(conventie.getCompanie().getReprezentant())
+                        .append("<br><br>[Semnătură electronică]<br>Data: ")
+                        .append(dateFormat.format(conventie.getDataIntocmirii()));
+                }
+            } catch (Exception e) {
+                html.append(conventie.getCompanie().getReprezentant())
+                    .append("<br><br>Semnătura: ____________<br>Data: ____________");
+            }
+        } else {
+            html.append(conventie.getCompanie().getReprezentant())
+                .append("<br><br>Semnătura: ____________<br>Data: ____________");
+        }
+            
+        html.append("</td>")
+            .append("<td>");
+            
+        // Semnătura studentului
+        if (conventie.getStatus() != ConventieStatus.NETRIMIS && conventie.getStudent().getSemnatura() != null) {
+            String base64Signature = Base64.getEncoder().encodeToString(conventie.getStudent().getSemnatura());
+            html.append(conventie.getStudent().getNume()).append(" ")
+                .append(conventie.getStudent().getPrenume())
+                .append("<br><br><img src='data:image/png;base64,")
+                .append(base64Signature)
+                .append("' class='signature-image'><br>Data: ")
+                .append(dateFormat.format(conventie.getDataIntocmirii()));
+        } else {
+            html.append(conventie.getStudent().getNume()).append(" ")
+                .append(conventie.getStudent().getPrenume())
+                .append("<br><br>Semnătura: ____________<br>Data: ____________");
+        }
+            
+        html.append("</td>")
+            .append("</tr>")
+            .append("</table>");
+
+        // Am luat la cunoștință
+        html.append("<p class='mt-4'>Am luat la cunoștință,</p>")
+            .append("<table class='signature-table'>")
+            .append("<tr>")
+            .append("<td><strong>Cadru didactic supervizor</strong><br>")
+            .append(conventie.getCadruDidactic().getNume()).append(" ")
+            .append(conventie.getCadruDidactic().getPrenume()).append("<br>")
+            .append("Funcția: ").append(conventie.getCadruDidactic().getFunctie()).append("<br><br>");
+            
+        // Semnătura cadrului didactic (care e prodecanul în practică)
+        if (conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR || 
+            conventie.getStatus() == ConventieStatus.APROBATA) {
+            try {
+                List<Prodecan> prodecani = prodecanRepository.findAll();
+                Prodecan prodecan = null;
+                
+                if (prodecani != null && !prodecani.isEmpty()) {
+                    for (Prodecan p : prodecani) {
+                        if (p.getSemnatura() != null) {
+                            prodecan = p;
+                            break;
+                        }
+                    }
+                }
+                
+                if (prodecan != null && prodecan.getSemnatura() != null) {
+                    String base64Signature = Base64.getEncoder().encodeToString(prodecan.getSemnatura());
+                    html.append("<img src='data:image/png;base64,")
+                        .append(base64Signature)
+                        .append("' class='signature-image'><br>")
+                        .append("Data: ").append(dateFormat.format(conventie.getDataIntocmirii()));
+                } else {
+                    html.append("[Semnătură electronică]<br>")
+                        .append("Data: ").append(dateFormat.format(conventie.getDataIntocmirii()));
+                }
+            } catch (Exception e) {
+                html.append("Semnătura: ____________<br>")
+                    .append("Data: ____________");
+            }
+        } else {
+            html.append("Semnătura: ____________<br>")
+                .append("Data: ____________");
+        }
+            
+        html.append("</td>")
+            .append("<td><strong>Tutore</strong><br>")
+            .append(conventie.getTutore().getNume()).append(" ")
+            .append(conventie.getTutore().getPrenume()).append("<br>")
+            .append("Funcția: ").append(conventie.getTutore().getFunctie()).append("<br><br>");
+            
+        // Semnătura tutorelui
+        if (conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
+            conventie.getStatus() == ConventieStatus.APROBATA) {
+            
+            try {
+                Optional<Tutore> tutoreOpt = tutoreRepository.findByEmail(conventie.getTutore().getEmail());
+                        
+                if (tutoreOpt.isPresent() && tutoreOpt.get().getSemnatura() != null) {
+                    String base64Signature = Base64.getEncoder().encodeToString(tutoreOpt.get().getSemnatura());
+                    html.append("<img src='data:image/png;base64,")
+                        .append(base64Signature)
+                        .append("' class='signature-image'><br>")
+                        .append("Data: ").append(dateFormat.format(conventie.getDataIntocmirii()));
+                } else {
+                    html.append("[Semnătură electronică]<br>")
+                        .append("Data: ").append(dateFormat.format(conventie.getDataIntocmirii()));
+                }
+            } catch (Exception e) {
+                html.append("Semnătura: ____________<br>")
+                    .append("Data: ____________");
+            }
+        } else {
+            html.append("Semnătura: ____________<br>")
+                .append("Data: ____________");
+        }
+            
+        html.append("</td>")
             .append("</tr>")
             .append("</table>");
 
         html.append("</body></html>");
         return html.toString();
+    }
+
+    // Metodă helper pentru a adăuga toate articolele (copiază din StudentController)
+    private void addAllArticlesToHtml(StringBuilder html, Conventie conventie, SimpleDateFormat dateFormat) {
+    	 // Articolul 1
+    	 html.append("<h3>Art. 1. Obiectul convenției-cadru</h3>")
+    	     .append("<p>(1) <em>Convenția-cadru</em> stabilește modul în care se organizează și se ")
+    	     .append("desfășoară stagiul de practică în vederea consolidării cunoștințelor teoretice și ")
+    	     .append("formarea abilităților practice, spre a le aplica în concordanță cu specializarea pentru ")
+    	     .append("care se instruiește studentul practicant.</p>")
+    	     .append("<p>(2) Stagiul de practică este realizat de practicant în vederea dobândirii ")
+    	     .append("competențelor profesionale menționate în Portofoliul de practică care este corelat cu fișa disciplinei de practică, ")
+    	     .append("parte integrantă a prezentei convenții. ")
+    	     .append("Locul desfășurării stagiului de practică este: ").append(conventie.getLoculDesfasurarii()).append("</p>")
+    	     .append("<p>(3) Modalitățile de derulare și conținutul stagiului de practică sunt descrise în ")
+    	     .append("prezenta convenție-cadru și în portofoliul de practică din anexă.</p>");
+
+    	 // Articolul 2
+    	 html.append("<h3>Art. 2. Statutul practicantului</h3>")
+    	     .append("<p>Practicantul rămâne, pe toată durata stagiului de pregătire practică, student al ")
+    	     .append("Universității Politehnica Timișoara.</p>");
+
+    	 // Articolul 3
+    	 html.append("<h3>Art. 3. Durata și perioada desfășurării stagiului de practică</h3>")
+    	     .append("<p>(1) Durata stagiului de practică, precizată în planul de învățământ, este de ")
+    	     .append(conventie.getDurataInPlanulDeInvatamant()).append(" [h].</p>")
+    	     .append("<p>(2) Perioada desfășurării stagiului de practică este conformă structurii anului universitar curent ")
+    	     .append("de la ").append(formatDate(conventie.getDataInceput()))
+    	     .append(" până la ").append(formatDate(conventie.getDataSfarsit())).append("</p>");
+
+    	 // Articolul 4
+    	 html.append("<h3>Art. 4. Plata și obligațiile sociale</h3>")
+    	     .append("<p>(1) Stagiul de pregătire practică (se bifează situația corespunzătoare):</p>")
+    	     .append("<p>☐ - se efectuează în cadrul unui contract de muncă, cei doi parteneri putând să beneficieze ")
+    	     .append("de prevederile Legii nr. 72/2007 privind stimularea încadrării în muncă a elevilor și studenților;</p>")
+    	     .append("<p>☐ - nu se efectuează în cadrul unui contract de muncă;</p>")
+    	     .append("<p>☐ - se efectuează în cadrul unui proiect finanțat prin Fondul Social European;</p>")
+    	     .append("<p>☐ - se efectuează în cadrul proiectului ...</p>")
+    	     .append("<p>(2) În cazul angajării ulterioare, perioada stagiului nu va fi considerată ca vechime ")
+    	     .append("în muncă în situația în care convenția nu se derulează în cadrul unui contract de muncă.</p>")
+    	     .append("<p>(3) Practicantul nu poate pretinde un salariu din partea partenerului de practică, cu ")
+    	     .append("excepția situației în care practicantul are statut de angajat.</p>")
+    	     .append("<p>(4) Partenerul de practică poate totuși acorda practicantului o indemnizație, ")
+    	     .append("gratificare, primă sau avantaje în natură, conform legislației în vigoare.</p>");
+
+    	 // Articolul 5
+    	 html.append("<h3>Art. 5. Responsabilitățile practicantului</h3>")
+    	     .append("<p>(1) Practicantul are obligația, ca pe durata derulării stagiului de practică, să ")
+    	     .append("respecte programul de lucru stabilit și să execute activitățile specificate de tutore ")
+    	     .append("în conformitate cu portofoliul de practică, în condițiile respectării cadrului legal cu ")
+    	     .append("privire la volumul și dificultatea acestora.</p>")
+    	     .append("<p>(2) Pe durata stagiului, practicantul respectă regulamentul de ordine interioară al ")
+    	     .append("partenerului de practică. În cazul nerespectării acestui regulament, conducătorul ")
+    	     .append("partenerului de practică își rezervă dreptul de a anula convenția-cadru, după ce în ")
+    	     .append("prealabil a ascultat punctul de vedere al practicantului și al îndrumătorului de ")
+    	     .append("practică și a înștiințat conducătorul facultății unde practicantul este înmatriculat ")
+    	     .append("și după primirea confirmării de primire a acestei informații. Această situație conduce la refacerea stagiului de practică și la susținerea unui nou colocviu de evaluare în anul universitar următor.</p>")
+    	     .append("<p>(3) Practicantul are obligația de a respecta normele de securitate și sănătate în ")
+    	     .append("muncă pe care le-a însușit de la reprezentantul partenerului de practică înainte de ")
+    	     .append("începerea stagiului de practică.</p>")
+    	     .append("<p>(4) Practicantul se angajează să nu folosească, în niciun caz, informațiile la care ")
+    	     .append("are acces în timpul stagiului despre partenerul de practică sau clienții săi, pentru a ")
+    	     .append("le comunica unui terț sau pentru a le publica, chiar după terminarea stagiului, decât ")
+    	     .append("cu acordul respectivului partener de practică.</p>");
+
+    	 // Articolul 6
+    	 html.append("<h3>Art. 6. Responsabilitățile partenerului de practică</h3>")
+    	     .append("<p>(1) Partenerul de practică va stabili un <em>tutore pentru stagiul de practică</em>, ")
+    	     .append("selectat dintre salariații proprii și ale cărui obligații sunt menționate în portofoliul ")
+    	     .append("de practică, parte integrantă a convenției-cadru.</p>")
+    	     .append("<p>(2) În cazul nerespectării obligațiilor de către practicant, tutorele va contacta ")
+    	     .append("cadrul didactic supervizor, responsabil de practică, aplicându-se sancțiuni conform ")
+    	     .append("legilor și regulamentelor în vigoare.</p>")
+    	     .append("<p>(3) Înainte de începerea stagiului de practică, partenerul are obligația de a face ")
+    	     .append("practicantului instructajul cu privire la normele de securitate și sănătate în muncă, ")
+    	     .append("pentru fiecare loc distinct de practică, în conformitate cu legislația în vigoare. ")
+    	     .append("Printre responsabilitățile sale, partenerul de practică va lua măsurile necesare pentru ")
+    	     .append("securitatea și sănătatea în muncă a practicantului, precum și pentru comunicarea ")
+    	     .append("regulilor de prevenire a riscurilor profesionale.</p>")
+    	     .append("<p>(4) Partenerul de practică trebuie să pună la dispoziția practicantului toate ")
+    	     .append("mijloacele necesare pentru desfășurarea activităților precizate în portofoliul de practică.</p>")
+    	     .append("<p>(5) Partenerul de practică are obligația de a asigura practicantului accesul liber ")
+    	     .append("la serviciul de medicina muncii, pe durata derulării pregătirii practice.</p>")
+    	     .append("<p>(6) În urma desfășurării cu succes a stagiului, partenerul de practică va acorda ")
+    	     .append("studentului, la cerere, o adeverință constatatoare.</p>");
+
+    	 // Articolul 7
+    	 html.append("<h3>Art. 7. Obligațiile organizatorului de practică</h3>")
+    	     .append("<p>(1) Organizatorul de practică desemnează un cadru didactic supervizor, responsabil ")
+    	     .append("cu planificarea, organizarea și supravegherea desfășurării pregătirii practice. ")
+    	     .append("Cadrul didactic supervizor responsabil de practică, împreună cu tutorele desemnat de ")
+    	     .append("partenerul de practică stabilesc tematica de practică și competențele profesionale ")
+    	     .append("care fac obiectul stagiului de pregătire practică.</p>")
+    	     .append("<p>(2) În cazul în care derularea stagiului de pregătire practică nu este conformă cu ")
+    	     .append("angajamentele luate de către partenerul de practică în cadrul prezentei convenții, ")
+    	     .append("conducătorul organizatorului de practică poate decide întreruperea stagiului de ")
+    	     .append("pregătire practică conform convenției-cadru, după informarea prealabilă a ")
+    	     .append("conducătorului partenerului de practică și după primirea confirmării de primire a ")
+    	     .append("acestei informații.</p>");
+
+    	 // Articolul 8
+    	 html.append("<h3>Art. 8. Persoane desemnate de organizatorul de practică și partenerul de practică</h3>")
+    	     .append("<p>(1) <strong>Tutorele</strong> (persoana care va avea responsabilitatea practicantului din partea partenerului de practică):</p>")
+    	     .append("<p>Dl/Dna ").append(conventie.getTutore().getNume()).append(" ").append(conventie.getTutore().getPrenume()).append("<br>")
+    	     .append("Funcția: ").append(conventie.getTutore().getFunctie()).append("<br>")
+    	     .append("Telefon: ").append(conventie.getTutore().getTelefon()).append("<br>")
+    	     .append("Email: ").append(conventie.getTutore().getEmail()).append("</p>")
+    	     .append("<p>(2) <strong>Cadrul didactic supervizor</strong>, responsabil cu urmărirea derulării stagiului de practică din partea organizatorului de practică:</p>")
+    	     .append("<p>Dl/Dna ").append(conventie.getCadruDidactic().getNume()).append(" ").append(conventie.getCadruDidactic().getPrenume()).append("<br>")
+    	     .append("Funcția: ").append(conventie.getCadruDidactic().getFunctie()).append("<br>")
+    	     .append("Telefon: ").append(conventie.getCadruDidactic().getTelefon()).append("<br>")
+    	     .append("Email: ").append(conventie.getCadruDidactic().getEmail()).append("</p>");
+
+    	 // Articolul 9
+    	 html.append("<h3>Art. 9. Evaluarea stagiului de pregătire practică prin credite transferabile</h3>")
+    	     .append("<p>Numărul de credite transferabile ce vor fi obținute în urma desfășurării stagiului ")
+    	     .append("de practică este de ").append(conventie.getNumarCredite()).append(".</p>");
+
+    	 // Articolul 10
+    	 html.append("<h3>Art. 10. Raportul privind stagiul de pregătire practică</h3>")
+    	     .append("<p>(1) În timpul derulării stagiului de practică, tutorele, împreună cu cadrul ")
+    	     .append("didactic supervizor, vor evalua practicantul în permanență. Vor fi monitorizate și ")
+    	     .append("evaluate atât nivelul de dobândire a competențelor profesionale, cât și ")
+    	     .append("comportamentul și modalitatea de integrare a practicantului în activitatea ")
+    	     .append("partenerului de practică (disciplină, punctualitate, responsabilitate în rezolvarea ")
+    	     .append("sarcinilor, respectarea regulamentului de ordine interioară al partenerului de practică).</p>")
+    	     .append("<p>(2) La finalul stagiului de practică, tutorele completează atestatul de practică ")
+    	     .append("și opțional fișa de evaluare, pe baza evaluării nivelului de dobândire a ")
+    	     .append("competențelor de către practicant. Rezultatul acestei evaluări va sta la baza notării ")
+    	     .append("practicantului de către cadrul didactic supervizor.</p>")
+    	     .append("<p>La finalul stagiului de practică, studentul elaborează un caiet de practică, ")
+    	     .append("însușit și de tutorele din partea partenerului de practică. Atestatul și fișa de ")
+    	     .append("evaluare completate de tutore vor sta la baza notării studentului conform ")
+    	     .append("<em>Regulamentului cadru de organizare și desfășurare a practicii studenților în UPT.</em></p>")
+    	     .append("<p>(3) Periodic și după încheierea stagiului de practică, practicantul va prezenta un ")
+    	     .append("<em>caiet de practică</em> care va cuprinde:</p>")
+    	     .append("<ul>")
+    	     .append("<li>denumirea modulului de pregătire;</li>")
+    	     .append("<li>competențe exersate;</li>")
+    	     .append("<li>activități desfășurate pe perioada stagiului de practică;</li>")
+    	     .append("<li>observații personale privitoare la activitatea depusă.</li>")
+    	     .append("</ul>")
+    	     .append("<p>(4) Pentru studiile de licență, în urma unui colocviu susținut în instituția de ")
+    	     .append("învățământ superior, pe baza documentelor de practică, calificativul foarte bine/ ")
+    	     .append("bine/ satisfăcător emis de instituția gazdă se omologhează cu calificativul ")
+    	     .append("<em>promovat</em> în catalogul disciplinei practică, iar calificativul nesatisfăcător ")
+    	     .append("emis de instituția gazdă se omologhează cu calificativul <em>nepromovat</em> în ")
+    	     .append("catalogul disciplinei practică.</p>")
+    	     .append("<p>(5) Pentru studiile de master, în urma unui colocviu susținut în instituția de ")
+    	     .append("învățământ superior, pe baza documentelor de practică, calificativul foarte bine/ ")
+    	     .append("bine/ satisfăcător emis de instituția gazdă se echivalează cu note de promovare în ")
+    	     .append("catalogul disciplinei practică (5-10), iar calificativul nesatisfăcător emis de ")
+    	     .append("instituția gazdă se echivalează cu note de nepromovare în catalogul disciplinei practică.</p>");
+
+    	 // Articolul 11
+    	 html.append("<h3>Art. 11. Sănătatea și securitatea în muncă</h3>")
+    	     .append("<p>(1) Practicantul anexează prezentului contract dovada asigurării medicale ")
+    	     .append("valabile în perioada și pe teritoriul statului unde se desfășoară stagiul de practică.</p>")
+    	     .append("<p>(2) Partenerul de practică are obligația respectării prevederilor legale cu ")
+    	     .append("privire la sănătatea și securitatea în muncă a practicatului pe durata stagiului de practică.</p>")
+    	     .append("<p>(3) Practicantului i se asigură protecție socială conform legislației în vigoare. ")
+    	     .append("Ca urmare, conform dispozițiilor Legii nr. 346/2002 privind asigurările pentru ")
+    	     .append("accidente de muncă și boli profesionale, cu modificările și completările ulterioare, ")
+    	     .append("practicantul beneficiază de legislația privitoare la accidentele de muncă pe toată ")
+    	     .append("durata efectuării pregătirii practice.</p>")
+    	     .append("<p>(4) În cazul unui accident suferit de practicant, fie în cursul lucrului, fie în ")
+    	     .append("timpul deplasării la lucru, partenerul de practică se angajează să înștiințeze ")
+    	     .append("asiguratorul cu privire la accidentul care a avut loc.</p>");
+
+    	 // Articolul 12
+    	 html.append("<h3>Art. 12. Condiții facultative de desfășurare a stagiului de pregătire practică</h3>")
+    	     .append("<p>(1) Îndemnizație, gratificări sau prime acordate practicantului:</p>")
+    	     .append("<p>").append(conventie.getIndemnizatii()).append("</p>")
+    	     .append("<p>(2) Avantaje eventuale (plata transportului de la și la locul desfășurării stagiului de practică, ")
+    	     .append("tichete de masă, acces la cantina partenerului de practică etc.):</p>")
+    	     .append("<p>").append(conventie.getAvantaje()).append("</p>")
+    	     .append("<p>(3) Alte precizări:</p>")
+    	     .append("<p>").append(conventie.getAltePrecizari()).append("</p>");
+
+    	 // Articolul 13
+    	 html.append("<h3>Art. 13. Prevederi finale</h3>")
+    	     .append("<p>Această convenție-cadru s-a încheiat în trei exemplare la data: ")
+    	     .append(formatDate(conventie.getDataIntocmirii())).append("</p>");
     }
     
     private void addArticleTitle(Document document, String title, Font font) throws DocumentException {
