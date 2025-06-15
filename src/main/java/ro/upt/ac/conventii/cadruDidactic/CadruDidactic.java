@@ -1,9 +1,11 @@
 package ro.upt.ac.conventii.cadruDidactic;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 
 @Entity
 public class CadruDidactic
@@ -20,6 +22,11 @@ public class CadruDidactic
 
 	private String telefon;
 	private String email;
+	
+	// Adăugăm câmpul pentru semnătură (nu obligatoriu)
+	@Lob
+    @Column(name = "semnatura", columnDefinition="LONGBLOB")
+    private byte[] semnatura;
 	
 	public CadruDidactic() 
 	{
@@ -98,4 +105,13 @@ public class CadruDidactic
 	{
 		this.specializare = specializare;
 	}
+	
+	// Getteri și setteri pentru semnătură
+	public byte[] getSemnatura() {
+        return semnatura;
+    }
+    
+    public void setSemnatura(byte[] semnatura) {
+        this.semnatura = semnatura;
+    }
 }

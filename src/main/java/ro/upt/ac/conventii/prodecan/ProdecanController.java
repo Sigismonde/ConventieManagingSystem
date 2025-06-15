@@ -76,6 +76,7 @@ import ro.upt.ac.conventii.utils.ValidationUtils;
 import ro.upt.ac.conventii.companie.Companie;
 import ro.upt.ac.conventii.companie.CompanieRepository;
 import ro.upt.ac.conventii.cadruDidactic.CadruDidactic;
+import ro.upt.ac.conventii.cadruDidactic.CadruDidacticDTO;
 import ro.upt.ac.conventii.cadruDidactic.CadruDidacticRepository;
 
 import org.openxmlformats.schemas.drawingml.x2006.main.CTGraphicalObject;
@@ -605,6 +606,16 @@ public class ProdecanController {
 
  // În ProdecanController.java, actualizează metoda addSignatureTable pentru PDF:
 
+ // Înlocuiește metoda addSignatureTable din ProdecanController cu această versiune actualizată
+
+ // Înlocuiește metoda addSignatureTable din ProdecanController cu această versiune corectată
+
+ // Înlocuiește metoda addSignatureTable din ProdecanController cu această versiune corectată
+
+ // Înlocuiește metoda addSignatureTable din ProdecanController cu această versiune corectată
+
+ // Înlocuiește metoda addSignatureTable din ProdecanController cu această versiune corectată
+
     private void addSignatureTable(Document document, Conventie conventie, Font font, Font boldFont, Authentication authentication) throws DocumentException {
         User user = (User) authentication.getPrincipal();
         Prodecan prodecan = prodecanRepository.findByEmail(user.getEmail());
@@ -651,10 +662,9 @@ public class ProdecanController {
         PdfPCell dataLabel = new PdfPCell(new Paragraph("Data", boldFont));
         dataLabel.setHorizontalAlignment(Element.ALIGN_LEFT);
 
-        // Data pentru UPT - afișează data dacă convenția a fost aprobată de prodecan
+        // Data pentru UPT - afișează data DOAR dacă convenția a fost aprobată FINAL (nu doar de prodecan)
         PdfPCell dataUPT = new PdfPCell();
-        if (conventie.getStatus() == ConventieStatus.APROBATA || 
-            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR) {
+        if (conventie.getStatus() == ConventieStatus.APROBATA) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
             dataUPT.addElement(new Paragraph(dateFormat.format(conventie.getDataIntocmirii()), font));
         } else {
@@ -697,10 +707,9 @@ public class ProdecanController {
         PdfPCell semnLabel = new PdfPCell(new Paragraph("Semnătura", boldFont));
         semnLabel.setHorizontalAlignment(Element.ALIGN_LEFT);
 
-        // Semnătura pentru UPT - folosește semnătura prodecanului
+        // Semnătura pentru UPT - folosește semnătura prodecanului DOAR dacă e aprobată final
         PdfPCell semnUPT = new PdfPCell();
-        if ((conventie.getStatus() == ConventieStatus.APROBATA || 
-             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR) && 
+        if (conventie.getStatus() == ConventieStatus.APROBATA && 
             prodecan != null && prodecan.getSemnatura() != null) {
             try {
                 Image signature = Image.getInstance(prodecan.getSemnatura());
@@ -787,7 +796,7 @@ public class ProdecanController {
         
         document.add(Chunk.NEWLINE);
 
-        // Al doilea tabel - Prodecan și Tutore (în loc de Cadru didactic și Tutore)
+        // Al doilea tabel - Cadru didactic și Tutore
         PdfPTable secondTable = new PdfPTable(3);
         secondTable.setWidthPercentage(100);
         float[] secondWidths = new float[]{2.5f, 5f, 5f};
@@ -795,54 +804,56 @@ public class ProdecanController {
 
         // Header pentru al doilea tabel
         PdfPCell emptyHeader2 = new PdfPCell(new Paragraph(""));
-        PdfPCell prodecanHeader = new PdfPCell(new Paragraph("Prodecan", boldFont)); // Schimbat din "Cadru didactic supervizor"
+        PdfPCell cadruDidacticHeader = new PdfPCell(new Paragraph("Cadru didactic supervizor", boldFont));
         PdfPCell tutoreHeader = new PdfPCell(new Paragraph("Tutore", boldFont));
 
-        prodecanHeader.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cadruDidacticHeader.setHorizontalAlignment(Element.ALIGN_CENTER);
         tutoreHeader.setHorizontalAlignment(Element.ALIGN_CENTER);
 
         secondTable.addCell(emptyHeader2);
-        secondTable.addCell(prodecanHeader);
+        secondTable.addCell(cadruDidacticHeader);
         secondTable.addCell(tutoreHeader);
 
         // Nume și prenume pentru al doilea tabel
         PdfPCell numeLabel2 = new PdfPCell(new Paragraph("Nume și prenume", boldFont));
         numeLabel2.setHorizontalAlignment(Element.ALIGN_LEFT);
-        PdfPCell numeProdecan = new PdfPCell(new Paragraph(prodecan != null ? prodecan.getNume() + " " + prodecan.getPrenume() : "N/A", font));
+        PdfPCell numeCadruDidactic = new PdfPCell(new Paragraph(conventie.getCadruDidactic().getNume() + " " + conventie.getCadruDidactic().getPrenume(), font));
         PdfPCell numeTutore = new PdfPCell(new Paragraph(conventie.getTutore().getNume() + " " + conventie.getTutore().getPrenume(), font));
 
-        numeProdecan.setHorizontalAlignment(Element.ALIGN_CENTER);
+        numeCadruDidactic.setHorizontalAlignment(Element.ALIGN_CENTER);
         numeTutore.setHorizontalAlignment(Element.ALIGN_CENTER);
 
         secondTable.addCell(numeLabel2);
-        secondTable.addCell(numeProdecan);
+        secondTable.addCell(numeCadruDidactic);
         secondTable.addCell(numeTutore);
 
         // Funcția pentru al doilea tabel
         PdfPCell functieLabel = new PdfPCell(new Paragraph("Funcția", boldFont));
         functieLabel.setHorizontalAlignment(Element.ALIGN_LEFT);
-        PdfPCell functieProdecan = new PdfPCell(new Paragraph("Prodecan", font));
+        PdfPCell functieCadruDidactic = new PdfPCell(new Paragraph(conventie.getCadruDidactic().getFunctie(), font));
         PdfPCell functieTutore = new PdfPCell(new Paragraph(conventie.getTutore().getFunctie(), font));
 
-        functieProdecan.setHorizontalAlignment(Element.ALIGN_CENTER);
+        functieCadruDidactic.setHorizontalAlignment(Element.ALIGN_CENTER);
         functieTutore.setHorizontalAlignment(Element.ALIGN_CENTER);
 
         secondTable.addCell(functieLabel);
-        secondTable.addCell(functieProdecan);
+        secondTable.addCell(functieCadruDidactic);
         secondTable.addCell(functieTutore);
 
         // Data pentru al doilea tabel
         PdfPCell dataLabel2 = new PdfPCell(new Paragraph("Data", boldFont));
         dataLabel2.setHorizontalAlignment(Element.ALIGN_LEFT);
         
-        // Data pentru prodecan
-        PdfPCell dataProdecan = new PdfPCell();
-        if (conventie.getStatus() == ConventieStatus.APROBATA || 
-            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR) {
+        // Data pentru cadrul didactic - afișează data dacă are semnătură proprie SAU dacă prodecanul a semnat (pentru cazul când prodecanul semnează în numele universității)
+        PdfPCell dataCadruDidactic = new PdfPCell();
+        if (conventie.getCadruDidactic().getSemnatura() != null || 
+            ((conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR || 
+              conventie.getStatus() == ConventieStatus.APROBATA) && 
+             prodecan != null && prodecan.getSemnatura() != null)) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-            dataProdecan.addElement(new Paragraph(dateFormat.format(conventie.getDataIntocmirii()), font));
+            dataCadruDidactic.addElement(new Paragraph(dateFormat.format(conventie.getDataIntocmirii()), font));
         } else {
-            dataProdecan.addElement(new Paragraph(".....", font));
+            dataCadruDidactic.addElement(new Paragraph(".....", font));
         }
         
         // Data pentru tutore
@@ -857,33 +868,44 @@ public class ProdecanController {
             dataTutore.addElement(new Paragraph(".....", font));
         }
 
-        dataProdecan.setHorizontalAlignment(Element.ALIGN_CENTER);
+        dataCadruDidactic.setHorizontalAlignment(Element.ALIGN_CENTER);
         dataTutore.setHorizontalAlignment(Element.ALIGN_CENTER);
 
         secondTable.addCell(dataLabel2);
-        secondTable.addCell(dataProdecan);
+        secondTable.addCell(dataCadruDidactic);
         secondTable.addCell(dataTutore);
 
         // Semnătura pentru al doilea tabel
         PdfPCell semnLabel2 = new PdfPCell(new Paragraph("Semnătura", boldFont));
         semnLabel2.setHorizontalAlignment(Element.ALIGN_LEFT);
         
-        // Semnătura prodecanului
-        PdfPCell semnProdecan = new PdfPCell();
-        if ((conventie.getStatus() == ConventieStatus.APROBATA || 
-             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR) && 
-            prodecan != null && prodecan.getSemnatura() != null) {
+        // Semnătura cadrului didactic - dacă are semnătură proprie o folosește, altfel folosește semnătura prodecanului când convenția e aprobată de prodecan
+        PdfPCell semnCadruDidactic = new PdfPCell();
+        if (conventie.getCadruDidactic().getSemnatura() != null) {
+            try {
+                Image signature = Image.getInstance(conventie.getCadruDidactic().getSemnatura());
+                signature.scaleToFit(100, 50);
+                signature.setAlignment(Element.ALIGN_CENTER);
+                semnCadruDidactic.addElement(signature);
+            } catch (Exception e) {
+                e.printStackTrace();
+                semnCadruDidactic.addElement(new Paragraph(".....", font));
+            }
+        } else if ((conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR || 
+                    conventie.getStatus() == ConventieStatus.APROBATA) && 
+                   prodecan != null && prodecan.getSemnatura() != null) {
+            // Dacă cadrul didactic nu are semnătură, folosește semnătura prodecanului când convenția e aprobată de prodecan
             try {
                 Image signature = Image.getInstance(prodecan.getSemnatura());
                 signature.scaleToFit(100, 50);
                 signature.setAlignment(Element.ALIGN_CENTER);
-                semnProdecan.addElement(signature);
+                semnCadruDidactic.addElement(signature);
             } catch (Exception e) {
                 e.printStackTrace();
-                semnProdecan.addElement(new Paragraph(".....", font));
+                semnCadruDidactic.addElement(new Paragraph(".....", font));
             }
         } else {
-            semnProdecan.addElement(new Paragraph(".....", font));
+            semnCadruDidactic.addElement(new Paragraph(".....", font));
         }
         
         // Semnătura tutorelui
@@ -911,11 +933,11 @@ public class ProdecanController {
             semnTutore.addElement(new Paragraph(".....", font));
         }
 
-        semnProdecan.setHorizontalAlignment(Element.ALIGN_CENTER);
+        semnCadruDidactic.setHorizontalAlignment(Element.ALIGN_CENTER);
         semnTutore.setHorizontalAlignment(Element.ALIGN_CENTER);
 
         secondTable.addCell(semnLabel2);
-        secondTable.addCell(semnProdecan);
+        secondTable.addCell(semnCadruDidactic);
         secondTable.addCell(semnTutore);
 
         document.add(secondTable);
@@ -942,6 +964,16 @@ public class ProdecanController {
     }
     
  // În ProdecanController - metoda addSignaturesTableWord actualizată
+ // Înlocuiește metoda addSignaturesTableWord din ProdecanController cu această versiune actualizată
+
+ // Înlocuiește metoda addSignaturesTableWord din ProdecanController cu această versiune corectată
+
+ // Înlocuiește metoda addSignaturesTableWord din ProdecanController cu această versiune corectată
+
+ // Înlocuiește metoda addSignaturesTableWord din ProdecanController cu această versiune corectată
+
+ // Înlocuiește metoda addSignaturesTableWord din ProdecanController cu această versiune corectată
+
     private void addSignaturesTableWord(XWPFDocument document, Conventie conventie, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         Prodecan prodecan = prodecanRepository.findByEmail(user.getEmail());
@@ -974,7 +1006,7 @@ public class ProdecanController {
         XWPFTableRow dateRow = mainTable.getRow(2);
         setCellTextBold(dateRow.getCell(0), "Data");
         
-        // Data pentru prodecan - dacă convenția a fost aprobată
+        // Data pentru prodecan - DOAR dacă convenția a fost aprobată FINAL
         if (conventie.getStatus() == ConventieStatus.APROBATA && conventie.getDataIntocmirii() != null) {
             setCellText(dateRow.getCell(1), formatDate(conventie.getDataIntocmirii()));
         } else {
@@ -986,6 +1018,7 @@ public class ProdecanController {
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
             conventie.getStatus() == ConventieStatus.APROBATA) {
             setCellText(dateRow.getCell(2), formatDate(conventie.getDataIntocmirii()));
         } else {
@@ -1003,7 +1036,7 @@ public class ProdecanController {
         XWPFTableRow signRow = mainTable.getRow(3);
         setCellTextBold(signRow.getCell(0), "Semnătura");
         
-        // Semnătura prodecanului - doar dacă convenția a fost aprobată final
+        // Semnătura prodecanului - DOAR dacă convenția a fost aprobată FINAL
         XWPFTableCell prodecanCell = signRow.getCell(1);
         if (conventie.getStatus() == ConventieStatus.APROBATA && prodecan != null && prodecan.getSemnatura() != null) {
             XWPFParagraph prodecanPara = prodecanCell.getParagraphs().get(0);
@@ -1033,6 +1066,7 @@ public class ProdecanController {
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_TUTORE || 
             conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
             conventie.getStatus() == ConventieStatus.APROBATA) {
             
             try {
@@ -1129,11 +1163,21 @@ public class ProdecanController {
         // Data cu bold pentru etichetă
         XWPFTableRow secondDateRow = secondTable.getRow(3);
         setCellTextBold(secondDateRow.getCell(0), "Data");
-        setCellText(secondDateRow.getCell(1), "....."); // Cadrul didactic nu semnează încă
+        
+        // Data pentru cadrul didactic - afișează data dacă are semnătură proprie SAU dacă prodecanul a semnat
+        if (conventie.getCadruDidactic().getSemnatura() != null || 
+            ((conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR || 
+              conventie.getStatus() == ConventieStatus.APROBATA) && 
+             prodecan != null && prodecan.getSemnatura() != null)) {
+            setCellText(secondDateRow.getCell(1), formatDate(conventie.getDataIntocmirii()));
+        } else {
+            setCellText(secondDateRow.getCell(1), ".....");
+        }
         
         // Data pentru tutore - dacă a fost aprobată de tutore sau mai departe
         if (conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
             conventie.getStatus() == ConventieStatus.APROBATA) {
             setCellText(secondDateRow.getCell(2), formatDate(conventie.getDataIntocmirii()));
         } else {
@@ -1143,12 +1187,57 @@ public class ProdecanController {
         // Semnătura cu bold pentru etichetă
         XWPFTableRow secondSignRow = secondTable.getRow(4);
         setCellTextBold(secondSignRow.getCell(0), "Semnătura");
-        setCellText(secondSignRow.getCell(1), "....."); // Cadrul didactic nu semnează încă
         
-        // Semnătura tutorelui - dacă a fost aprobată de tutore sau mai departe
+        // Semnătura cadrului didactic - dacă are semnătură proprie o folosește, altfel folosește semnătura prodecanului
+        XWPFTableCell cadruDidacticCell = secondSignRow.getCell(1);
+        if (conventie.getCadruDidactic().getSemnatura() != null) {
+            XWPFParagraph cadruDidacticPara = cadruDidacticCell.getParagraphs().get(0);
+            cadruDidacticPara.setAlignment(ParagraphAlignment.CENTER);
+            cadruDidacticPara.setSpacingBefore(400);
+            XWPFRun cadruDidacticRun = cadruDidacticPara.createRun();
+            
+            try {
+                cadruDidacticRun.addPicture(
+                    new ByteArrayInputStream(conventie.getCadruDidactic().getSemnatura()),
+                    XWPFDocument.PICTURE_TYPE_PNG,
+                    "signature.png",
+                    Units.toEMU(100),
+                    Units.toEMU(50)
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+                cadruDidacticRun.setText(".....");
+            }
+        } else if ((conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR || 
+                    conventie.getStatus() == ConventieStatus.APROBATA) && 
+                   prodecan != null && prodecan.getSemnatura() != null) {
+            // Dacă cadrul didactic nu are semnătură, folosește semnătura prodecanului
+            XWPFParagraph cadruDidacticPara = cadruDidacticCell.getParagraphs().get(0);
+            cadruDidacticPara.setAlignment(ParagraphAlignment.CENTER);
+            cadruDidacticPara.setSpacingBefore(400);
+            XWPFRun cadruDidacticRun = cadruDidacticPara.createRun();
+            
+            try {
+                cadruDidacticRun.addPicture(
+                    new ByteArrayInputStream(prodecan.getSemnatura()),
+                    XWPFDocument.PICTURE_TYPE_PNG,
+                    "signature.png",
+                    Units.toEMU(100),
+                    Units.toEMU(50)
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+                cadruDidacticRun.setText(".....");
+            }
+        } else {
+            setCellText(cadruDidacticCell, ".....");
+        }
+        
+        // Semnătura tutorelui
         XWPFTableCell tutoreCell = secondSignRow.getCell(2);
         if (conventie.getStatus() == ConventieStatus.APROBATA_TUTORE || 
             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRODECAN || 
+            conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR ||
             conventie.getStatus() == ConventieStatus.APROBATA) {
             
             try {
@@ -1178,7 +1267,6 @@ public class ProdecanController {
             setCellText(tutoreCell, ".....");
         }
     }
-
     // Metodă helper pentru text bold
     private void setCellTextBold(XWPFTableCell cell, String text) {
         XWPFParagraph paragraph = cell.getParagraphs().get(0);
@@ -1362,7 +1450,7 @@ public class ProdecanController {
     }
    
 
- // Lista cadre didactice
+    // Actualizează metoda cadreDidactice pentru a folosi DTO
     @GetMapping("/cadre-didactice")
     public String cadreDidactice(Model model, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
@@ -1370,7 +1458,13 @@ public class ProdecanController {
         
         try {
             List<CadruDidactic> cadreDidactice = cadruDidacticRepository.findAll();
-            model.addAttribute("cadreDidactice", cadreDidactice != null ? cadreDidactice : new ArrayList<>());
+            
+            // Convertim în DTO-uri pentru a putea accesa Base64 în template
+            List<CadruDidacticDTO> cadreDidacticeDTO = cadreDidactice.stream()
+                .map(CadruDidacticDTO::new)
+                .collect(Collectors.toList());
+            
+            model.addAttribute("cadreDidactice", cadreDidacticeDTO != null ? cadreDidacticeDTO : new ArrayList<>());
         } catch (Exception e) {
             System.err.println("Eroare la încărcarea cadrelor didactice: " + e.getMessage());
             model.addAttribute("cadreDidactice", new ArrayList<>());
@@ -1561,6 +1655,79 @@ public class ProdecanController {
         return "redirect:/prodecan/studenti";
     }
     
+    
+    @PostMapping("/cadru-didactic/upload-semnatura/{id}")
+    public String uploadSemnaturaCadruDidactic(@PathVariable int id,
+                                              @RequestParam("semnatura") MultipartFile file, 
+                                              RedirectAttributes redirectAttributes) {
+        try {
+            CadruDidactic cadruDidactic = cadruDidacticRepository.findById(id);
+            
+            if (cadruDidactic == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", 
+                    "Nu s-a găsit cadrul didactic specificat.");
+                return "redirect:/prodecan/cadre-didactice";
+            }
+
+            // Verificăm tipul fișierului
+            if (!file.getContentType().startsWith("image/")) {
+                redirectAttributes.addFlashAttribute("errorMessage", 
+                    "Vă rugăm să încărcați doar fișiere imagine (.jpg, .png).");
+                return "redirect:/prodecan/cadre-didactice";
+            }
+
+            // Verificăm mărimea fișierului (max 2MB)
+            if (file.getSize() > 2 * 1024 * 1024) {
+                redirectAttributes.addFlashAttribute("errorMessage", 
+                    "Fișierul este prea mare. Mărimea maximă permisă este 2MB.");
+                return "redirect:/prodecan/cadre-didactice";
+            }
+
+            // Salvăm semnătura
+            cadruDidactic.setSemnatura(file.getBytes());
+            cadruDidacticRepository.save(cadruDidactic);
+            
+            redirectAttributes.addFlashAttribute("successMessage", 
+                "Semnătura pentru " + cadruDidactic.getNumeComplet() + " a fost încărcată cu succes!");
+            
+        } catch (IOException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", 
+                "Eroare la încărcarea semnăturii: " + e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", 
+                "A apărut o eroare neașteptată: " + e.getMessage());
+        }
+        
+        return "redirect:/prodecan/cadre-didactice";
+    }
+
+    // Metoda pentru ștergerea semnăturii cadrului didactic
+    @PostMapping("/cadru-didactic/sterge-semnatura/{id}")
+    public String stergeSemnaturaCadruDidactic(@PathVariable int id, 
+                                              RedirectAttributes redirectAttributes) {
+        try {
+            CadruDidactic cadruDidactic = cadruDidacticRepository.findById(id);
+            
+            if (cadruDidactic == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", 
+                    "Nu s-a găsit cadrul didactic specificat.");
+                return "redirect:/prodecan/cadre-didactice";
+            }
+
+            // Ștergem semnătura
+            cadruDidactic.setSemnatura(null);
+            cadruDidacticRepository.save(cadruDidactic);
+            
+            redirectAttributes.addFlashAttribute("successMessage", 
+                "Semnătura pentru " + cadruDidactic.getNumeComplet() + " a fost ștearsă cu succes!");
+            
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", 
+                "Eroare la ștergerea semnăturii: " + e.getMessage());
+        }
+        
+        return "redirect:/prodecan/cadre-didactice";
+    }
     
     @GetMapping("/conventie-export-word/{id}")
     public ResponseEntity<byte[]> exportConventieWord(@PathVariable("id") int id, Authentication authentication) throws IOException {
@@ -2222,6 +2389,8 @@ public class ProdecanController {
     }
     
  // În ProdecanController.java - actualizează metoda generateConventieHtml
+ // Înlocuiește complet metoda generateConventieHtml din ProdecanController cu această versiune:
+
     private String generateConventieHtml(Conventie conventie, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         Prodecan prodecan = prodecanRepository.findByEmail(user.getEmail());
@@ -2298,7 +2467,7 @@ public class ProdecanController {
             .append(", telefon ").append(conventie.getStudent().getTelefon())
             .append(", denumit în continuare <strong>practicant</strong></p></div>");
 
-     // Articolul 1
+        // Articolul 1
         html.append("<h3>Art. 1. Obiectul convenției-cadru</h3>")
             .append("<p>(1) <em>Convenția-cadru</em> stabilește modul în care se organizează și se ")
             .append("desfășoară stagiul de practică în vederea consolidării cunoștințelor teoretice și ")
@@ -2324,7 +2493,7 @@ public class ProdecanController {
             .append("de la ").append(formatDate(conventie.getDataInceput()))
             .append(" până la ").append(formatDate(conventie.getDataSfarsit())).append("</p>");
 
-        // Articolul 4
+        // Articolele 4-12 (le adaug toate pentru completitudine)
         html.append("<h3>Art. 4. Plata și obligațiile sociale</h3>")
             .append("<p>(1) Stagiul de pregătire practică (se bifează situația corespunzătoare):</p>")
             .append("<p>☐ - se efectuează în cadrul unui contract de muncă, cei doi parteneri putând să beneficieze ")
@@ -2478,7 +2647,7 @@ public class ProdecanController {
             .append("<p>Această convenție-cadru s-a încheiat în trei exemplare la data: ")
             .append(formatDate(conventie.getDataIntocmirii())).append("</p>");
 
-        // Tabel semnături - ACELAȘI ca înainte dar cu semnături
+        // Tabel semnături principale
         html.append("<table class='signature-table'>")
             .append("<tr>")
             .append("<th>Universitatea Politehnica Timișoara<br>Rector</th>")
@@ -2491,9 +2660,8 @@ public class ProdecanController {
             .append("<tr>")
             .append("<td>");
 
-        // Verificăm dacă convenția este aprobată și avem semnătură de prodecan
-        if ((conventie.getStatus() == ConventieStatus.APROBATA || 
-             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR) && 
+        // Verificăm dacă convenția este aprobată FINAL (nu doar de prodecan) și avem semnătură de prodecan
+        if (conventie.getStatus() == ConventieStatus.APROBATA && 
             prodecan != null && prodecan.getSemnatura() != null) {
             // Convertim semnătura în Base64 pentru a o putea afișa în HTML
             String base64Signature = Base64.getEncoder().encodeToString(prodecan.getSemnatura());
@@ -2585,10 +2753,17 @@ public class ProdecanController {
             .append(conventie.getCadruDidactic().getPrenume()).append("<br>")
             .append("Funcția: ").append(conventie.getCadruDidactic().getFunctie()).append("<br><br>");
             
-        // Semnătura cadrului didactic (care e de fapt prodecanul)
-        if ((conventie.getStatus() == ConventieStatus.APROBATA || 
-             conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR) && 
-            prodecan != null && prodecan.getSemnatura() != null) {
+        // Semnătura cadrului didactic - dacă are semnătură proprie o folosește, altfel folosește semnătura prodecanului
+        if (conventie.getCadruDidactic().getSemnatura() != null) {
+            String base64Signature = Base64.getEncoder().encodeToString(conventie.getCadruDidactic().getSemnatura());
+            html.append("<img src='data:image/png;base64,")
+                .append(base64Signature)
+                .append("' class='signature-image'><br>")
+                .append("Data: ").append(dateFormat.format(conventie.getDataIntocmirii()));
+        } else if ((conventie.getStatus() == ConventieStatus.IN_ASTEPTARE_PRORECTOR || 
+                    conventie.getStatus() == ConventieStatus.APROBATA) && 
+                   prodecan != null && prodecan.getSemnatura() != null) {
+            // Dacă cadrul didactic nu are semnătură, folosește semnătura prodecanului
             String base64Signature = Base64.getEncoder().encodeToString(prodecan.getSemnatura());
             html.append("<img src='data:image/png;base64,")
                 .append(base64Signature)
