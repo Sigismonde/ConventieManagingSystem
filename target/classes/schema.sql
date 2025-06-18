@@ -58,6 +58,7 @@ CREATE TABLE companie (
     telefon VARCHAR(20)
 );
 
+-- Updated conventie table with proper status constraint
 CREATE TABLE conventie (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     companie_id BIGINT,
@@ -78,8 +79,23 @@ CREATE TABLE conventie (
     avantaje TEXT,
     alte_precizari TEXT,
     data_intocmirii DATE,
-    status VARCHAR(20) DEFAULT 'IN_ASTEPTARE',
+    status VARCHAR(30) NOT NULL DEFAULT 'IN_ASTEPTARE_PARTENER',
     FOREIGN KEY (companie_id) REFERENCES companie(id),
     FOREIGN KEY (student_id) REFERENCES student(id),
-    FOREIGN KEY (cadru_didactic_id) REFERENCES cadru_didactic(id)
+    FOREIGN KEY (cadru_didactic_id) REFERENCES cadru_didactic(id),
+    
+    -- Add constraint to ensure only valid enum values
+    CONSTRAINT chk_conventie_status CHECK (
+        status IN (
+            'NETRIMIS', 
+            'IN_ASTEPTARE_PARTENER', 
+            'APROBATA_PARTENER',
+            'IN_ASTEPTARE_TUTORE', 
+            'APROBATA_TUTORE', 
+            'IN_ASTEPTARE_PRODECAN',
+            'IN_ASTEPTARE_PRORECTOR', 
+            'APROBATA', 
+            'RESPINSA'
+        )
+    )
 );
