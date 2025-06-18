@@ -104,7 +104,7 @@
         <div class="card mb-4">
             <div class="card-header bg-warning bg-opacity-25">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-clock me-2"></i>Convenții în Așteptarea Mea
+                    <i class="fas fa-clock me-2"></i>Convenții în Așteptare Aprobare
                 </h5>
             </div>
             <div class="card-body">
@@ -125,7 +125,7 @@
                             <tr th:if="${conventiiNesemnate == null || conventiiNesemnate.empty}">
                                 <td colspan="7" class="text-center">Nu există convenții în așteptarea ta.</td>
                             </tr>
-                            <tr th:each="conventie : ${conventiiNesemnate}">
+                            <tr th:each="conventie : ${conventiiNesemnate}" class="table-warning">
                                 <td th:text="${conventie.student.numeComplet}">Nume Student</td>
                                 <td th:text="${conventie.companie.nume}">Nume Companie</td>
                                 <td>
@@ -135,7 +135,7 @@
                                 <td th:text="${#dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy')}">Data Întocmirii</td>
                                 <td th:text="${conventie.cadruDidactic.numeComplet}">Cadru Didactic</td>
                                 <td>
-                                    <span class="badge bg-warning">În așteptare Prodecan</span>
+                                    <span class="badge bg-warning">ÎN AȘTEPTARE PRODECAN</span>
                                 </td>
                                 <td>
                                     <div class="btn-group">
@@ -209,7 +209,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="conventie : ${conventiiTrimiseProrector}">
+                            <tr th:each="conventie : ${conventiiTrimiseProrector}" class="table bg-info">
                                 <td th:text="${conventie.student.numeComplet}">Nume Student</td>
                                 <td th:text="${conventie.companie.nume}">Nume Companie</td>
                                 <td>
@@ -219,7 +219,7 @@
                                 <td th:text="${#dates.format(conventie.dataIntocmirii, 'dd.MM.yyyy')}">Data</td>
                                 <td th:text="${conventie.cadruDidactic.numeComplet}">Cadru Didactic</td>
                                 <td>
-                                    <span class="badge bg-info">În așteptare Prorector</span>
+                                    <span class="badge bg-info">ÎN AȘTEPTARE PRORECTOR</span>
                                 </td>
                                 <td>
                                     <div class="btn-group">
